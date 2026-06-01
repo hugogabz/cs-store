@@ -1,3 +1,5 @@
+import { getPrisma } from "@/services/prisma"
+
 export type Product = {
   id: string
   title: string
@@ -5,13 +7,15 @@ export type Product = {
   price: number
   image: string
   featured: boolean
-  createdAt: string
+  createdAt: Date
 }
 
 export async function getProducts(): Promise<Product[]> {
-  const response = await fetch("http://localhost:3000/api/products", {
-    cache: "no-store",
-  })
+  const prisma = getPrisma()
 
-  return response.json()
+  return prisma.product.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
 }

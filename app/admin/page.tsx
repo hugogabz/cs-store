@@ -40,7 +40,9 @@ export default function AdminPage() {
       return
     }
 
-    loadProducts()
+    void fetch("/api/products")
+      .then((response) => response.json())
+      .then((data) => setProducts(data))
   }, [router])
 
   async function handleSubmit(event: React.FormEvent) {

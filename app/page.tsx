@@ -7,6 +7,8 @@ import { CartDrawer } from "@/components/layout/cart-drawer"
 import { BenefitsSection } from "@/components/home/benefits-section"
 import { getProducts } from "@/services/products"
 
+export const dynamic = "force-dynamic"
+
 export default async function Home() {
   const products = await getProducts()
 

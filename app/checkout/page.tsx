@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { CreditCard, Lock, ShieldCheck, Truck } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
 
@@ -25,12 +26,12 @@ export default function CheckoutPage() {
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-8 md:py-12">
       <div className="mx-auto max-w-7xl">
-        <a
+        <Link
           href="/"
           className="logo-font text-3xl font-bold text-[#B28A22] md:text-4xl"
         >
           CS Store
-        </a>
+        </Link>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
           <section className="space-y-6">

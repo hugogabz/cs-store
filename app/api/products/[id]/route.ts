@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { getPrisma } from "@/services/prisma"
 
 export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrisma()
   const { id } = await context.params
 
   await prisma.product.delete({
@@ -24,6 +23,7 @@ export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrisma()
   const { id } = await context.params
   const body = await request.json()
 
