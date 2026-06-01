@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
 import { getPrisma } from "@/services/prisma"
 import { getProducts } from "@/services/products"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 export async function GET() {
   const products = await getProducts()
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       title: body.title,
       category: body.category,
       price: Number(body.price),
-      image: body.image,
+      image: normalizeProductImageSrc(body.image),
       featured: body.featured ?? false,
     },
   })

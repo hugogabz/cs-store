@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { Search, X } from "lucide-react"
 import { useEffect, useState } from "react"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 type Product = {
   id: string
@@ -97,7 +98,7 @@ export function SearchModal({
               className="flex items-center gap-4 rounded-2xl p-3 transition hover:bg-[#F8F6F2]"
             >
               <Image
-                src={product.image}
+                src={normalizeProductImageSrc(product.image)}
                 alt={product.title}
                 width={64}
                 height={64}

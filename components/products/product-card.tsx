@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
+import { normalizeProductImageSrc } from "@/utils/images"
 import { toast } from "sonner"
 
 type ProductCardProps = {
@@ -19,12 +20,13 @@ export function ProductCard({
   image,
 }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
+  const imageSrc = normalizeProductImageSrc(image)
 
   return (
     <div className="group overflow-hidden rounded-3xl border border-[#E7E1D8] bg-white shadow-sm transition hover:shadow-lg">
       <div className="relative h-64 overflow-hidden bg-[#F8F6F2] md:h-80">
         <Image
-          src={image}
+          src={imageSrc}
           alt={title}
           fill
           sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 78vw"
@@ -51,7 +53,7 @@ export function ProductCard({
               addItem({
                 title,
                 price: toNumberPrice(price),
-                image,
+                image: imageSrc,
               })
 
               toast.success("Produto adicionado", {

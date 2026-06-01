@@ -5,6 +5,7 @@ import Link from "next/link"
 import { X } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 export function CartDrawer() {
   const {
@@ -60,7 +61,7 @@ export function CartDrawer() {
               className="flex gap-4"
             >
               <Image
-                src={item.image}
+                src={normalizeProductImageSrc(item.image)}
                 alt={item.title}
                 width={96}
                 height={96}

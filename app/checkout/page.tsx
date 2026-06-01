@@ -5,6 +5,7 @@ import Link from "next/link"
 import { CreditCard, Lock, ShieldCheck, Truck } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items)
@@ -138,9 +139,9 @@ export default function CheckoutPage() {
                   <div
                     key={item.id}
                     className="flex gap-4 rounded-3xl border border-[#E7E1D8] p-4"
-                  >
-                    <Image
-                      src={item.image}
+                    >
+                      <Image
+                      src={normalizeProductImageSrc(item.image)}
                       alt={item.title}
                       width={96}
                       height={96}

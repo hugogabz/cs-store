@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 type Product = {
   id: string
@@ -306,7 +307,7 @@ export default function AdminPage() {
               >
                 <div className="flex items-center gap-4">
                   <Image
-                    src={product.image}
+                    src={normalizeProductImageSrc(product.image)}
                     alt={product.title}
                     width={80}
                     height={80}

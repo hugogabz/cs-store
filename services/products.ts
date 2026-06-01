@@ -1,4 +1,5 @@
 import { getPrisma } from "@/services/prisma"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 export type Product = {
   id: string
@@ -13,9 +14,14 @@ export type Product = {
 export async function getProducts(): Promise<Product[]> {
   const prisma = getPrisma()
 
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     orderBy: {
       createdAt: "desc",
     },
   })
+
+  return products.map((product) => ({
+    ...product,
+    image: normalizeProductImageSrc(product.image),
+  }))
 }
