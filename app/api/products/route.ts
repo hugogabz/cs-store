@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
 import { getPrisma } from "@/services/prisma"
 import { getProducts } from "@/services/products"
 
@@ -9,6 +10,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!(await isAdminAuthenticated())) {
+    return unauthorizedResponse()
+  }
+
   const prisma = getPrisma()
   const body = await request.json()
 

@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [image, setImage] = useState("")
   const [featured, setFeatured] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [checkingAccess, setCheckingAccess] = useState(true)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
 
   async function loadProducts() {
@@ -33,16 +34,32 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    const isAdmin = localStorage.getItem("cs-store-admin")
+    let ignore = false
 
-    if (isAdmin !== "true") {
-      router.push("/admin-login")
-      return
+    void fetch("/api/admin/session")
+      .then((response) => {
+        if (!response.ok) {
+          router.push("/admin-login")
+          return null
+        }
+
+        return fetch("/api/products")
+      })
+      .then((response) => response?.json())
+      .then((data) => {
+        if (!ignore && data) {
+          setProducts(data)
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setCheckingAccess(false)
+        }
+      })
+
+    return () => {
+      ignore = true
     }
-
-    void fetch("/api/products")
-      .then((response) => response.json())
-      .then((data) => setProducts(data))
   }, [router])
 
   async function handleSubmit(event: React.FormEvent) {
@@ -50,7 +67,7 @@ export default function AdminPage() {
 
     setLoading(true)
 
-    await fetch(
+    const response = await fetch(
       editingProductId
         ? `/api/products/${editingProductId}`
         : "/api/products",
@@ -68,6 +85,12 @@ export default function AdminPage() {
         }),
       }
     )
+
+    if (response.status === 401) {
+      setLoading(false)
+      router.push("/admin-login")
+      return
+    }
 
     setTitle("")
     setCategory("Cabelos")
@@ -107,9 +130,14 @@ export default function AdminPage() {
 
     if (!confirmDelete) return
 
-    await fetch(`/api/products/${id}`, {
+    const response = await fetch(`/api/products/${id}`, {
       method: "DELETE",
     })
+
+    if (response.status === 401) {
+      router.push("/admin-login")
+      return
+    }
 
     await loadProducts()
 
@@ -126,13 +154,24 @@ export default function AdminPage() {
     )
   })
 
+  if (checkingAccess) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F8F6F2] px-4">
+        <p className="text-[#5C5C5C]">Verificando acesso...</p>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-10">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="flex justify-end">
           <button
-            onClick={() => {
-              localStorage.removeItem("cs-store-admin")
+            onClick={async () => {
+              await fetch("/api/admin/logout", {
+                method: "POST",
+              })
+
               router.push("/admin-login")
             }}
             className="rounded-full border border-[#E7E1D8] bg-white px-5 py-2 text-sm transition hover:border-red-300 hover:text-red-500"

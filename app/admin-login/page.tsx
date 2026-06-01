@@ -7,12 +7,26 @@ export default function AdminLoginPage() {
   const router = useRouter()
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  function handleLogin(event: React.FormEvent) {
+  async function handleLogin(event: React.FormEvent) {
     event.preventDefault()
+    setError("")
+    setLoading(true)
 
-    if (password === "admin123") {
-      localStorage.setItem("cs-store-admin", "true")
+    const response = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        password,
+      }),
+    })
+
+    setLoading(false)
+
+    if (response.ok) {
       router.push("/admin")
       return
     }
@@ -56,8 +70,11 @@ export default function AdminLoginPage() {
             </p>
           )}
 
-          <button className="w-full rounded-full bg-[#D4AF37] py-4 font-semibold text-black transition hover:bg-[#C89B2C]">
-            Entrar
+          <button
+            disabled={loading}
+            className="w-full rounded-full bg-[#D4AF37] py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:opacity-60"
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
       </div>

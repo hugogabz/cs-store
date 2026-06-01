@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server"
+import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
 import { getPrisma } from "@/services/prisma"
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) {
+    return unauthorizedResponse()
+  }
+
   const prisma = getPrisma()
   const { id } = await context.params
 
@@ -23,6 +28,10 @@ export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) {
+    return unauthorizedResponse()
+  }
+
   const prisma = getPrisma()
   const { id } = await context.params
   const body = await request.json()
