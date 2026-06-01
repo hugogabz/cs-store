@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { X } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
@@ -58,9 +59,11 @@ export function CartDrawer() {
               key={item.id}
               className="flex gap-4"
             >
-              <img
+              <Image
                 src={item.image}
                 alt={item.title}
+                width={96}
+                height={96}
                 className="h-24 w-24 rounded-2xl object-cover"
               />
 

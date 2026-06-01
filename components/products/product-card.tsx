@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
 import { toast } from "sonner"
@@ -21,11 +22,13 @@ export function ProductCard({
 
   return (
     <div className="group overflow-hidden rounded-3xl border border-[#E7E1D8] bg-white shadow-sm transition hover:shadow-lg">
-      <div className="overflow-hidden bg-[#F8F6F2]">
-        <img
+      <div className="relative h-64 overflow-hidden bg-[#F8F6F2] md:h-80">
+        <Image
           src={image}
           alt={title}
-          className="h-64 w-full object-cover transition duration-300 group-hover:scale-[1.03] md:h-80"
+          fill
+          sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 78vw"
+          className="object-cover transition duration-300 group-hover:scale-[1.03]"
         />
       </div>
 

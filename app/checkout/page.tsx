@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { CreditCard, Lock, ShieldCheck, Truck } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
@@ -138,9 +139,11 @@ export default function CheckoutPage() {
                     key={item.id}
                     className="flex gap-4 rounded-3xl border border-[#E7E1D8] p-4"
                   >
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.title}
+                      width={96}
+                      height={96}
                       className="h-24 w-24 rounded-2xl object-cover"
                     />
 

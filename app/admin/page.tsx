@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -304,9 +305,11 @@ export default function AdminPage() {
                 className="flex flex-col gap-4 rounded-3xl border border-[#E7E1D8] p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="flex items-center gap-4">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.title}
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-2xl object-cover"
                   />
 

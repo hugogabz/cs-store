@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Search, X } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -95,9 +96,11 @@ export function SearchModal({
               key={product.id}
               className="flex items-center gap-4 rounded-2xl p-3 transition hover:bg-[#F8F6F2]"
             >
-              <img
+              <Image
                 src={product.image}
                 alt={product.title}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-2xl object-cover"
               />
 
