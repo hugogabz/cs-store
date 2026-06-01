@@ -1,20 +1,15 @@
 "use client"
 
 import { Search, X } from "lucide-react"
-import { useState } from "react"
-import {
-  accessoryProducts,
-  cosmeticProducts,
-  featuredProducts,
-  hairProducts,
-} from "@/data/products"
+import { useEffect, useState } from "react"
 
-const allProducts = [
-  ...featuredProducts,
-  ...hairProducts,
-  ...cosmeticProducts,
-  ...accessoryProducts,
-]
+type Product = {
+  id: string
+  title: string
+  category: string
+  price: number
+  image: string
+}
 
 type SearchModalProps = {
   isOpen: boolean
@@ -26,6 +21,25 @@ export function SearchModal({
   onClose,
 }: SearchModalProps) {
   const [search, setSearch] = useState("")
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    if (!isOpen || products.length > 0) return
+
+    let ignore = false
+
+    void fetch("/api/products")
+      .then((response) => response.json())
+      .then((data) => {
+        if (!ignore) {
+          setProducts(data)
+        }
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [isOpen, products.length])
 
   const normalizedSearch = search
     .toLowerCase()
@@ -33,7 +47,7 @@ export function SearchModal({
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
 
-  const filteredProducts = allProducts.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const searchableText = `
       ${product.title}
       ${product.category}
@@ -48,7 +62,7 @@ export function SearchModal({
 
   const productsToShow =
     normalizedSearch.length === 0
-      ? allProducts
+      ? products
       : filteredProducts
 
   if (!isOpen) return null
@@ -76,9 +90,9 @@ export function SearchModal({
         </div>
 
         <div className="max-h-[420px] space-y-4 overflow-y-auto">
-          {productsToShow.map((product, index) => (
+          {productsToShow.map((product) => (
             <div
-              key={`${product.title}-${product.category}-${index}`}
+              key={product.id}
               className="flex items-center gap-4 rounded-2xl p-3 transition hover:bg-[#F8F6F2]"
             >
               <img
@@ -93,7 +107,11 @@ export function SearchModal({
                 </h3>
 
                 <p className="text-sm text-[#B28A22]">
-                  {product.category} • {product.price}
+                  {product.category}{" "}
+                  {product.price.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
                 </p>
               </div>
             </div>
