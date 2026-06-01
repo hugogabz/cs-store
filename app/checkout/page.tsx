@@ -3,25 +3,16 @@
 import Link from "next/link"
 import { CreditCard, Lock, ShieldCheck, Truck } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/utils/currency"
 
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items)
 
   const total = items.reduce((acc, item) => {
-    const numericPrice = Number(
-      String(item.price)
-        .replace("R$", "")
-        .replace(",", ".")
-        .trim()
-    )
-
-    return acc + numericPrice * item.quantity
+    return acc + toNumberPrice(item.price) * item.quantity
   }, 0)
 
-  const formattedTotal = total.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })
+  const formattedTotal = formatCurrency(total)
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-8 md:py-12">
@@ -140,14 +131,7 @@ export default function CheckoutPage() {
 
             <div className="mt-6 space-y-5">
               {items.map((item) => {
-                const itemPrice = Number(
-                  String(item.price)
-                    .replace("R$", "")
-                    .replace(",", ".")
-                    .trim()
-                )
-
-                const itemTotal = itemPrice * item.quantity
+                const itemTotal = toNumberPrice(item.price) * item.quantity
 
                 return (
                   <div
@@ -170,10 +154,7 @@ export default function CheckoutPage() {
                       </p>
 
                       <p className="mt-auto font-bold text-[#B28A22]">
-                        {itemTotal.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
+                        {formatCurrency(itemTotal)}
                       </p>
                     </div>
                   </div>

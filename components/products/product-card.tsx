@@ -1,6 +1,7 @@
 "use client"
 
 import { useCartStore } from "@/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/utils/currency"
 import { toast } from "sonner"
 
 type ProductCardProps = {
@@ -39,14 +40,14 @@ export function ProductCard({
 
         <div className="flex items-center justify-between gap-3">
           <p className="text-lg font-bold text-[#1A1A1A] md:text-xl">
-            {price}
+            {formatCurrency(price)}
           </p>
 
           <button
             onClick={() => {
               addItem({
                 title,
-                price: String(price),
+                price: toNumberPrice(price),
                 image,
               })
 

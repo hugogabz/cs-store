@@ -1,33 +1,26 @@
 "use client"
 
+import Link from "next/link"
 import { X } from "lucide-react"
 import { useCartStore } from "@/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/utils/currency"
 
 export function CartDrawer() {
+  const {
+    items,
+    isOpen,
+    closeCart,
+    removeItem,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useCartStore()
 
-const {
-  items,
-  isOpen,
-  closeCart,
-  removeItem,
-  increaseQuantity,
-  decreaseQuantity,
-} = useCartStore()
-
-const total = items.reduce((acc, item) => {
-  const numericPrice = Number(
-    String(item.price)
-      .replace("R$", "")
-      .replace(",", ".")
-      .trim()
-  )
-
-  return acc + numericPrice * item.quantity
-}, 0)
+  const total = items.reduce((acc, item) => {
+    return acc + toNumberPrice(item.price) * item.quantity
+  }, 0)
 
   return (
     <>
-      {/* OVERLAY */}
       <div
         onClick={closeCart}
         className={`fixed inset-0 z-40 bg-black/40 transition ${
@@ -35,18 +28,12 @@ const total = items.reduce((acc, item) => {
         }`}
       />
 
-      {/* DRAWER */}
       <div
         className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ${
-          isOpen
-            ? "translate-x-0"
-            : "translate-x-full"
+          isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-
-        {/* HEADER */}
         <div className="flex items-center justify-between border-b border-neutral-200 p-6">
-
           <h2 className="text-2xl font-bold">
             Seu Carrinho
           </h2>
@@ -57,12 +44,9 @@ const total = items.reduce((acc, item) => {
           >
             <X />
           </button>
-
         </div>
 
-        {/* ITEMS */}
         <div className="flex-1 space-y-6 overflow-y-auto p-6">
-
           {items.length === 0 && (
             <p className="text-neutral-500">
               Seu carrinho está vazio.
@@ -70,12 +54,10 @@ const total = items.reduce((acc, item) => {
           )}
 
           {items.map((item) => (
-
             <div
               key={item.id}
               className="flex gap-4"
             >
-
               <img
                 src={item.image}
                 alt={item.title}
@@ -83,13 +65,11 @@ const total = items.reduce((acc, item) => {
               />
 
               <div className="flex flex-1 flex-col">
-
                 <h3 className="font-semibold">
                   {item.title}
                 </h3>
 
                 <div className="mt-3 flex items-center gap-3">
-
                   <button
                     onClick={() => decreaseQuantity(item.id)}
                     className="flex h-8 w-8 items-center justify-center rounded-full border"
@@ -107,62 +87,40 @@ const total = items.reduce((acc, item) => {
                   >
                     +
                   </button>
-
                 </div>
 
                 <p className="mt-2 text-[#D4AF37]">
-                  {Number(
-                    String(item.price)
-                      .replace("R$", "")
-                      .replace(",", ".")
-                      .trim()
-                  ).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {formatCurrency(item.price)}
                 </p>
 
                 <button
-                  onClick={() =>
-                    removeItem(item.id)
-                  }
+                  onClick={() => removeItem(item.id)}
                   className="mt-auto text-left text-sm text-red-500"
                 >
                   Remover
                 </button>
-
               </div>
             </div>
-
           ))}
-
         </div>
 
-        {/* FOOTER */}
         <div className="border-t border-neutral-200 p-6 pb-28 md:pb-6">
-
           <div className="mb-6 flex items-center justify-between">
-
             <span className="text-lg">
               Total
             </span>
 
             <span className="text-2xl font-bold">
-              R$ {total.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
+              {formatCurrency(total)}
             </span>
-
           </div>
 
-          <a
+          <Link
             href="/checkout"
             className="block w-full rounded-full bg-[#D4AF37] py-4 text-center font-semibold text-black transition hover:scale-[1.02]"
           >
             Finalizar Compra
-          </a>
-
+          </Link>
         </div>
       </div>
     </>
