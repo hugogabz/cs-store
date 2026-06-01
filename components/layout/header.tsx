@@ -1,0 +1,73 @@
+"use client"
+
+import { useState } from "react"
+import { Search, ShoppingBag, User } from "lucide-react"
+import { useCartStore } from "@/store/cart-store"
+import { SearchModal } from "@/components/layout/search-modal"
+
+export function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  const openCart = useCartStore((state) => state.openCart)
+  const items = useCartStore((state) => state.items)
+
+  return (
+    <>
+      <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-8">
+          <a
+            href="#inicio"
+            className="logo-font text-3xl font-bold text-[#B28A22] transition hover:scale-[1.03] hover:text-[#D4AF37] md:text-4xl"
+          >
+            CS Store
+          </a>
+
+          <nav className="hidden gap-10 text-sm font-medium md:flex">
+            <a href="#cabelos" className="transition hover:text-[#D4AF37]">
+              Cabelos
+            </a>
+
+            <a href="#cosmeticos" className="transition hover:text-[#D4AF37]">
+              Cosméticos
+            </a>
+
+            <a href="#acessorios" className="transition hover:text-[#D4AF37]">
+              Acessórios
+            </a>
+          </nav>
+
+          <div className="hidden items-center gap-4 md:flex">
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]"
+            >
+              <Search size={20} />
+            </button>
+
+            <button className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]">
+              <User size={20} />
+            </button>
+
+            <button
+              onClick={openCart}
+              className="relative rounded-full bg-[#D4AF37] p-3 text-black transition hover:scale-105 hover:bg-[#C89B2C]"
+            >
+              <ShoppingBag size={20} />
+
+              {items.length > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-xs text-white">
+                  {items.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
+    </>
+  )
+}
