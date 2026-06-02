@@ -6,7 +6,7 @@ import { MobileMenu } from "@/components/layout/mobile-menu"
 import { CartDrawer } from "@/components/layout/cart-drawer"
 import { BenefitsSection } from "@/components/home/benefits-section"
 import { getProducts } from "@/services/products"
-import { normalizeSearchText } from "@/utils/search"
+import { isSameCategory } from "@/utils/categories"
 
 export const dynamic = "force-dynamic"
 
@@ -19,8 +19,7 @@ export default async function Home() {
 
   const productsByCategory = (category: string) =>
     products.filter(
-      (product) =>
-        normalizeSearchText(product.category) === normalizeSearchText(category)
+      (product) => isSameCategory(product.category, category)
     )
 
   const hairProducts = productsByCategory("Cabelos")
@@ -41,6 +40,7 @@ export default async function Home() {
           title="Produtos em destaque"
           subtitle="Uma seleção especial dos itens mais desejados da CS Store."
           products={featuredProducts}
+          seeMoreHref="/categoria/destaques"
         />
 
         <CategorySection
@@ -48,6 +48,7 @@ export default async function Home() {
           title="Linha Premium para Cabelos"
           subtitle="Produtos sofisticados para cuidados capilares com acabamento profissional."
           products={hairProducts}
+          seeMoreHref="/categoria/cabelos"
         />
 
         <CategorySection
@@ -55,6 +56,7 @@ export default async function Home() {
           title="Cosméticos Exclusivos"
           subtitle="Maquiagem e skincare com visual refinado e qualidade premium."
           products={cosmeticProducts}
+          seeMoreHref="/categoria/cosmeticos"
         />
 
         <CategorySection
@@ -62,6 +64,7 @@ export default async function Home() {
           title="Acessórios Elegantes"
           subtitle="Peças modernas e sofisticadas para complementar seu estilo."
           products={accessoryProducts}
+          seeMoreHref="/categoria/acessorios"
         />
       </main>
 
