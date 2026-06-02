@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/products/product-card"
 type Product = {
   id?: string
   title: string
+  description?: string | null
   category: string
   price: string | number
   image: string
@@ -103,12 +104,12 @@ export function CategorySection({
           {products.length > 0 ? (
             <div
               ref={carouselRef}
-              className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-4 pr-8 scrollbar-hide md:gap-5 md:px-2"
+              className="flex snap-x gap-3 overflow-x-auto scroll-smooth pb-4 pr-8 scrollbar-hide sm:gap-4 md:gap-5 md:px-2"
             >
               {products.map((product) => (
                 <div
                   key={product.id ?? product.title}
-                  className="min-w-[78%] snap-start sm:min-w-[48%] md:min-w-[calc((100%_-_60px)/4)]"
+                  className="min-w-[44%] snap-start sm:min-w-[32%] md:min-w-[calc((100%_-_40px)/3)] lg:min-w-[calc((100%_-_60px)/4)]"
                 >
                   <ProductCard {...product} />
                 </div>

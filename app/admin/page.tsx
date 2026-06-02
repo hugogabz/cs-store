@@ -11,6 +11,7 @@ import { normalizeSearchText } from "@/utils/search"
 type Product = {
   id: string
   title: string
+  description: string | null
   category: string
   price: number
   image: string
@@ -35,6 +36,7 @@ export default function AdminPage() {
   const [adminSearch, setAdminSearch] = useState("")
 
   const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
   const [category, setCategory] = useState("Cabelos")
   const [price, setPrice] = useState("")
   const [image, setImage] = useState("")
@@ -69,6 +71,7 @@ export default function AdminPage() {
 
   function resetForm() {
     setTitle("")
+    setDescription("")
     setCategory("Cabelos")
     setPrice("")
     setImage("")
@@ -197,6 +200,7 @@ export default function AdminPage() {
           },
           body: JSON.stringify({
             title,
+            description,
             category,
             price,
             image,
@@ -233,6 +237,7 @@ export default function AdminPage() {
   function handleEdit(product: Product) {
     setEditingProductId(product.id)
     setTitle(product.title)
+    setDescription(product.description ?? "")
     setCategory(product.category)
     setPrice(String(product.price))
     setImage(product.image)
@@ -278,6 +283,7 @@ export default function AdminPage() {
   const filteredProducts = products.filter((product) => {
     const productText = normalizeSearchText(`
       ${product.title}
+      ${product.description ?? ""}
       ${product.category}
       ${product.price}
     `)
@@ -332,8 +338,7 @@ export default function AdminPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-relaxed text-[#5C5C5C] md:text-base">
-              Gerencie os produtos da CS Store, envie imagens e atualize o
-              catálogo sem mexer no código.
+              Gerencie produtos, descrições, imagens e destaque do catálogo.
             </p>
           </div>
 
@@ -367,6 +372,19 @@ export default function AdminPage() {
                   <option value="Cosméticos">Cosméticos</option>
                   <option value="Acessórios">Acessórios</option>
                 </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium">
+                  Descrição do produto
+                </label>
+
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  className={`${inputClass} min-h-28 resize-y leading-relaxed`}
+                  placeholder="Descreva benefícios, textura, acabamento ou indicação de uso."
+                />
               </div>
 
               <div>
@@ -490,7 +508,7 @@ export default function AdminPage() {
             <input
               value={adminSearch}
               onChange={(event) => setAdminSearch(event.target.value)}
-              placeholder="Pesquisar por nome, categoria ou preço..."
+              placeholder="Pesquisar por nome, descrição, categoria ou preço..."
               className={`${inputClass} mt-6`}
             />
           </div>
@@ -522,6 +540,12 @@ export default function AdminPage() {
                         currency: "BRL",
                       })}
                     </p>
+
+                    {product.description && (
+                      <p className="mt-1 line-clamp-1 text-sm text-[#6F6A63]">
+                        {product.description}
+                      </p>
+                    )}
 
                     {product.featured && (
                       <span className="mt-2 inline-block rounded-full bg-[#B89535]/15 px-3 py-1 text-xs font-semibold text-[#8A6800]">

@@ -44,6 +44,7 @@ export async function PUT(
     },
     data: {
       title: body.title,
+      description: body.description?.trim() || null,
       category: body.category,
       price: toNumberPrice(body.price),
       image: normalizeProductImageSrc(body.image),

@@ -12,6 +12,7 @@ import { normalizeSearchText } from "@/utils/search"
 type Product = {
   id: string
   title: string
+  description: string | null
   category: string
   price: number
   image: string
@@ -80,6 +81,7 @@ export function SearchModal({
     return uniqueProducts.filter((product) => {
       const searchableText = normalizeSearchText(`
         ${product.title}
+        ${product.description ?? ""}
         ${product.category}
         ${product.price}
         ${formatCurrency(product.price)}
@@ -97,17 +99,17 @@ export function SearchModal({
       onClick={onClose}
     >
       <div
-        className="mx-auto flex max-h-[calc(100dvh-32px)] max-w-2xl flex-col rounded-[28px] bg-white p-4 shadow-2xl md:mt-24 md:max-h-[640px] md:rounded-[32px] md:p-6"
+        className="mx-auto flex max-h-[calc(100dvh-32px)] max-w-2xl flex-col rounded-2xl bg-white p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:mt-24 md:max-h-[640px] md:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center gap-3 border-b border-[#E7E1D8] pb-4 md:mb-6 md:gap-4">
-          <Search className="shrink-0 text-[#B28A22]" />
+          <Search className="shrink-0 text-[#B89535]" />
 
           <input
             autoFocus
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por nome, categoria ou preço..."
+            placeholder="Buscar por nome, descrição, categoria ou preço..."
             className="min-w-0 flex-1 bg-transparent text-base outline-none md:text-lg"
           />
 
@@ -135,7 +137,7 @@ export function SearchModal({
                   alt={product.title}
                   width={72}
                   height={72}
-                  className="h-16 w-16 shrink-0 rounded-2xl object-cover md:h-[72px] md:w-[72px]"
+                  className="h-16 w-16 shrink-0 rounded-xl object-cover md:h-[72px] md:w-[72px]"
                 />
 
                 <div className="min-w-0 flex-1">
@@ -143,7 +145,7 @@ export function SearchModal({
                     {product.title}
                   </h3>
 
-                  <p className="mt-1 text-sm text-[#B28A22]">
+                  <p className="mt-1 text-sm text-[#B89535]">
                     {product.category} • {formatCurrency(numericPrice)}
                   </p>
                 </div>
@@ -160,7 +162,7 @@ export function SearchModal({
                       description: product.title,
                     })
                   }}
-                  className="self-center rounded-full bg-[#D4AF37] p-3 text-black transition hover:bg-[#C89B2C] md:px-4"
+                  className="self-center rounded-full bg-[#B89535] p-3 text-black transition hover:bg-[#A7832E] md:px-4"
                   aria-label={`Adicionar ${product.title} ao carrinho`}
                 >
                   <ShoppingBag size={18} />
@@ -170,7 +172,7 @@ export function SearchModal({
           })}
 
           {productsToShow.length === 0 && (
-            <div className="rounded-3xl bg-[#F8F6F2] px-6 py-10 text-center">
+            <div className="rounded-2xl bg-[#F8F6F2] px-6 py-10 text-center">
               <p className="font-semibold text-[#1A1A1A]">
                 Nenhum produto encontrado.
               </p>
