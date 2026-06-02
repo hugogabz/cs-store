@@ -1,12 +1,16 @@
 export function toNumberPrice(price: number | string) {
-  if (typeof price === "number") return price
+  if (typeof price === "number") {
+    return Number.isFinite(price) ? price : 0
+  }
 
-  return Number(
+  const numericPrice = Number(
     price
       .replace("R$", "")
       .replace(",", ".")
       .trim()
   )
+
+  return Number.isFinite(numericPrice) ? numericPrice : 0
 }
 
 export function formatCurrency(price: number | string) {

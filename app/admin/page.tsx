@@ -3,7 +3,9 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { normalizeProductImageSrc } from "@/utils/images"
+import { normalizeSearchText } from "@/utils/search"
 
 type Product = {
   id: string
@@ -29,8 +31,26 @@ export default function AdminPage() {
   const [checkingAccess, setCheckingAccess] = useState(true)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
 
+  const imagePreviewSrc = image.trim()
+    ? normalizeProductImageSrc(image)
+    : null
+
+  function resetForm() {
+    setTitle("")
+    setCategory("Cabelos")
+    setPrice("")
+    setImage("")
+    setFeatured(false)
+    setEditingProductId(null)
+  }
+
   async function loadProducts() {
     const response = await fetch("/api/products")
+
+    if (!response.ok) {
+      throw new Error("Erro ao carregar produtos.")
+    }
+
     const data = await response.json()
     setProducts(data)
   }
@@ -53,6 +73,11 @@ export default function AdminPage() {
           setProducts(data)
         }
       })
+      .catch(() => {
+        if (!ignore) {
+          toast.error("Não foi possível carregar o painel.")
+        }
+      })
       .finally(() => {
         if (!ignore) {
           setCheckingAccess(false)
@@ -69,46 +94,49 @@ export default function AdminPage() {
 
     setLoading(true)
 
-    const response = await fetch(
-      editingProductId
-        ? `/api/products/${editingProductId}`
-        : "/api/products",
-      {
-        method: editingProductId ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          category,
-          price,
-          image,
-          featured,
-        }),
+    try {
+      const response = await fetch(
+        editingProductId
+          ? `/api/products/${editingProductId}`
+          : "/api/products",
+        {
+          method: editingProductId ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            category,
+            price,
+            image,
+            featured,
+          }),
+        }
+      )
+
+      if (response.status === 401) {
+        router.push("/admin-login")
+        return
       }
-    )
 
-    if (response.status === 401) {
+      if (!response.ok) {
+        throw new Error("Erro ao salvar produto.")
+      }
+
+      const wasEditing = Boolean(editingProductId)
+      resetForm()
+      await loadProducts()
+
+      toast.success(
+        wasEditing
+          ? "Produto atualizado com sucesso."
+          : "Produto cadastrado com sucesso."
+      )
+    } catch {
+      toast.error("Não foi possível salvar o produto.")
+    } finally {
       setLoading(false)
-      router.push("/admin-login")
-      return
     }
-
-    setTitle("")
-    setCategory("Cabelos")
-    setPrice("")
-    setImage("")
-    setFeatured(false)
-    setEditingProductId(null)
-    setLoading(false)
-
-    await loadProducts()
-
-    alert(
-      editingProductId
-        ? "Produto atualizado com sucesso!"
-        : "Produto cadastrado com sucesso!"
-    )
   }
 
   function handleEdit(product: Product) {
@@ -132,28 +160,37 @@ export default function AdminPage() {
 
     if (!confirmDelete) return
 
-    const response = await fetch(`/api/products/${id}`, {
-      method: "DELETE",
-    })
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      })
 
-    if (response.status === 401) {
-      router.push("/admin-login")
-      return
+      if (response.status === 401) {
+        router.push("/admin-login")
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error("Erro ao excluir produto.")
+      }
+
+      await loadProducts()
+      toast.success("Produto excluído com sucesso.")
+    } catch {
+      toast.error("Não foi possível excluir o produto.")
     }
-
-    await loadProducts()
-
-    alert("Produto excluído com sucesso!")
   }
 
-  const filteredProducts = products.filter((product) => {
-    const searchText = adminSearch.toLowerCase().trim()
+  const searchText = normalizeSearchText(adminSearch)
 
-    return (
-      product.title.toLowerCase().includes(searchText) ||
-      product.category.toLowerCase().includes(searchText) ||
-      String(product.price).includes(searchText)
-    )
+  const filteredProducts = products.filter((product) => {
+    const productText = normalizeSearchText(`
+      ${product.title}
+      ${product.category}
+      ${product.price}
+    `)
+
+    return productText.includes(searchText)
   })
 
   if (checkingAccess) {
@@ -165,126 +202,171 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F6F2] px-4 py-10">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="flex justify-end">
+    <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-10">
+      <div className="mx-auto max-w-6xl space-y-6 md:space-y-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
+              CS Store
+            </span>
+            <h1 className="mt-2 text-3xl font-bold text-[#1A1A1A] md:text-4xl">
+              Painel administrativo
+            </h1>
+          </div>
+
           <button
             onClick={async () => {
               await fetch("/api/admin/logout", {
                 method: "POST",
               })
 
+              toast.success("Sessão encerrada.")
               router.push("/admin-login")
             }}
-            className="rounded-full border border-[#E7E1D8] bg-white px-5 py-2 text-sm transition hover:border-red-300 hover:text-red-500"
+            className="w-full rounded-full border border-[#E7E1D8] bg-white px-5 py-3 text-sm font-semibold transition hover:border-red-300 hover:text-red-500 sm:w-auto"
           >
             Sair
           </button>
         </div>
 
-        <section className="rounded-[32px] bg-white p-8 shadow-xl">
-          <div className="mb-8">
+        <section className="rounded-[28px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
+          <div className="mb-6 md:mb-8">
             <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
-              Admin
+              Produtos
             </span>
 
-            <h1 className="mt-3 text-4xl font-bold text-[#1A1A1A]">
-              {editingProductId ? "Editar Produto" : "Cadastrar Produto"}
-            </h1>
+            <h2 className="mt-3 text-3xl font-bold text-[#1A1A1A]">
+              {editingProductId ? "Editar produto" : "Cadastrar produto"}
+            </h2>
 
-            <p className="mt-3 text-[#5C5C5C]">
+            <p className="mt-3 text-sm leading-relaxed text-[#5C5C5C] md:text-base">
               Gerencie os produtos da CS Store sem mexer no código.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Nome do produto
+          <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-[1fr_260px]">
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Nome do produto
+                </label>
+
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  required
+                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  placeholder="Ex: Óleo Capilar Premium"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Categoria
+                </label>
+
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                >
+                  <option value="Cabelos">Cabelos</option>
+                  <option value="Cosméticos">Cosméticos</option>
+                  <option value="Acessórios">Acessórios</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Preço
+                </label>
+
+                <input
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value)}
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  placeholder="Ex: 129.90"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Caminho da imagem
+                </label>
+
+                <input
+                  value={image}
+                  onChange={(event) => setImage(event.target.value)}
+                  required
+                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  placeholder="/products/exemplo.jpg"
+                />
+              </div>
+
+              <label className="flex items-center gap-3 rounded-2xl border border-[#E7E1D8] p-4 md:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={featured}
+                  onChange={(event) => setFeatured(event.target.checked)}
+                />
+
+                <span>Marcar como produto em destaque</span>
               </label>
 
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
-                placeholder="Ex: Óleo Capilar Premium"
-              />
+              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
+                <button
+                  disabled={loading}
+                  className="rounded-full bg-[#D4AF37] px-6 py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:opacity-60"
+                >
+                  {loading
+                    ? "Salvando..."
+                    : editingProductId
+                      ? "Atualizar produto"
+                      : "Salvar produto"}
+                </button>
+
+                {editingProductId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="rounded-full border border-[#E7E1D8] px-6 py-4 font-semibold text-[#1A1A1A] transition hover:border-[#D4AF37] hover:text-[#B28A22]"
+                  >
+                    Cancelar edição
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Categoria
-              </label>
+            <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-4">
+              <p className="mb-3 text-sm font-semibold text-[#1A1A1A]">
+                Preview da imagem
+              </p>
 
-              <select
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
-              >
-                <option value="Cabelos">Cabelos</option>
-                <option value="Cosméticos">Cosméticos</option>
-                <option value="Acessórios">Acessórios</option>
-              </select>
+              {imagePreviewSrc ? (
+                <Image
+                  src={imagePreviewSrc}
+                  alt="Preview do produto"
+                  width={320}
+                  height={320}
+                  className="aspect-square w-full rounded-2xl object-cover"
+                />
+              ) : (
+                <div className="flex aspect-square items-center justify-center rounded-2xl bg-white text-center text-sm text-[#6F6A63]">
+                  Informe um caminho como /products/exemplo.jpg
+                </div>
+              )}
             </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Preço
-              </label>
-
-              <input
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                required
-                type="number"
-                step="0.01"
-                className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
-                placeholder="Ex: 129.90"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Caminho da imagem
-              </label>
-
-              <input
-                value={image}
-                onChange={(event) => setImage(event.target.value)}
-                required
-                className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
-                placeholder="/products/produto.jpg"
-              />
-            </div>
-
-            <label className="flex items-center gap-3 rounded-2xl border border-[#E7E1D8] p-4 md:col-span-2">
-              <input
-                type="checkbox"
-                checked={featured}
-                onChange={(event) => setFeatured(event.target.checked)}
-              />
-
-              <span>Marcar como produto em destaque</span>
-            </label>
-
-            <button
-              disabled={loading}
-              className="rounded-full bg-[#D4AF37] py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:opacity-60 md:col-span-2"
-            >
-              {loading
-                ? "Salvando..."
-                : editingProductId
-                  ? "Atualizar Produto"
-                  : "Salvar Produto"}
-            </button>
           </form>
         </section>
 
-        <section className="rounded-[32px] bg-white p-8 shadow-xl">
+        <section className="rounded-[28px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
           <div className="mb-6">
             <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
-              Produtos
+              Catálogo
             </span>
 
             <h2 className="mt-3 text-3xl font-bold text-[#1A1A1A]">
@@ -294,7 +376,7 @@ export default function AdminPage() {
             <input
               value={adminSearch}
               onChange={(event) => setAdminSearch(event.target.value)}
-              placeholder="Pesquisar produto..."
+              placeholder="Pesquisar por nome, categoria ou preço..."
               className="mt-6 w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
             />
           </div>
@@ -305,21 +387,21 @@ export default function AdminPage() {
                 key={product.id}
                 className="flex flex-col gap-4 rounded-3xl border border-[#E7E1D8] p-4 md:flex-row md:items-center md:justify-between"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex min-w-0 gap-4">
                   <Image
                     src={normalizeProductImageSrc(product.image)}
                     alt={product.title}
                     width={80}
                     height={80}
-                    className="h-20 w-20 rounded-2xl object-cover"
+                    className="h-20 w-20 shrink-0 rounded-2xl object-cover"
                   />
 
-                  <div>
-                    <h3 className="font-semibold text-[#1A1A1A]">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 font-semibold text-[#1A1A1A]">
                       {product.title}
                     </h3>
 
-                    <p className="text-sm text-[#5C5C5C]">
+                    <p className="mt-1 text-sm text-[#5C5C5C]">
                       {product.category} •{" "}
                       {product.price.toLocaleString("pt-BR", {
                         style: "currency",
@@ -335,7 +417,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="grid grid-cols-2 gap-3 md:flex md:shrink-0">
                   <button
                     onClick={() => handleEdit(product)}
                     className="rounded-full border border-[#E7E1D8] px-4 py-2 text-sm transition hover:border-[#D4AF37] hover:text-[#B28A22]"
@@ -354,9 +436,9 @@ export default function AdminPage() {
             ))}
 
             {filteredProducts.length === 0 && (
-              <p className="text-[#5C5C5C]">
+              <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-6 text-center text-[#5C5C5C]">
                 Nenhum produto encontrado.
-              </p>
+              </div>
             )}
           </div>
         </section>

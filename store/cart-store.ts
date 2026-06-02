@@ -1,5 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { toNumberPrice } from "@/utils/currency"
+import { normalizeProductImageSrc } from "@/utils/images"
 
 type CartItem = {
   id: number
@@ -38,17 +40,25 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (item) =>
         set((state) => {
+          const normalizedItem = {
+            ...item,
+            image: normalizeProductImageSrc(item.image),
+            price: toNumberPrice(item.price),
+          }
+
           const existingItem = state.items.find(
-            (product) => product.title === item.title
+            (product) => product.title === normalizedItem.title
           )
 
           if (existingItem) {
             return {
               items: state.items.map((product) =>
-                product.title === item.title
+                product.title === normalizedItem.title
                   ? {
                       ...product,
-                      quantity: product.quantity + 1,
+                      price: normalizedItem.price,
+                      image: normalizedItem.image,
+                      quantity: Math.max(1, product.quantity) + 1,
                     }
                   : product
               ),
@@ -59,7 +69,7 @@ export const useCartStore = create<CartStore>()(
             items: [
               ...state.items,
               {
-                ...item,
+                ...normalizedItem,
                 id: Date.now(),
                 quantity: 1,
               },
@@ -78,7 +88,7 @@ export const useCartStore = create<CartStore>()(
             item.id === id
               ? {
                   ...item,
-                  quantity: item.quantity + 1,
+                  quantity: Math.max(1, item.quantity) + 1,
                 }
               : item
           ),
@@ -91,7 +101,7 @@ export const useCartStore = create<CartStore>()(
               item.id === id
                 ? {
                     ...item,
-                    quantity: item.quantity - 1,
+                    quantity: Math.max(1, item.quantity) - 1,
                   }
                 : item
             )

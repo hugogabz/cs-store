@@ -10,6 +10,7 @@ export function MobileMenu() {
   const openCart = useCartStore((state) => state.openCart)
   const closeCart = useCartStore((state) => state.closeCart)
   const items = useCartStore((state) => state.items)
+  const cartCount = items.reduce((acc, item) => acc + item.quantity, 0)
 
   function handleNavigate(section: string) {
     setActive(section)
@@ -62,9 +63,9 @@ export function MobileMenu() {
           <div className="relative">
             <ShoppingBag size={21} />
 
-            {items.length > 0 && (
+            {cartCount > 0 && (
               <span className="absolute -right-3 -top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[10px] font-bold text-white">
-                {items.length}
+                {cartCount}
               </span>
             )}
           </div>

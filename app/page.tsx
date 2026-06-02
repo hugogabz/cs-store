@@ -6,6 +6,7 @@ import { MobileMenu } from "@/components/layout/mobile-menu"
 import { CartDrawer } from "@/components/layout/cart-drawer"
 import { BenefitsSection } from "@/components/home/benefits-section"
 import { getProducts } from "@/services/products"
+import { normalizeSearchText } from "@/utils/search"
 
 export const dynamic = "force-dynamic"
 
@@ -16,17 +17,15 @@ export default async function Home() {
     (product) => product.featured
   )
 
-  const hairProducts = products.filter(
-    (product) => product.category === "Cabelos"
-  )
+  const productsByCategory = (category: string) =>
+    products.filter(
+      (product) =>
+        normalizeSearchText(product.category) === normalizeSearchText(category)
+    )
 
-  const cosmeticProducts = products.filter(
-    (product) => product.category === "Cosméticos"
-  )
-
-  const accessoryProducts = products.filter(
-    (product) => product.category === "Acessórios"
-  )
+  const hairProducts = productsByCategory("Cabelos")
+  const cosmeticProducts = productsByCategory("Cosméticos")
+  const accessoryProducts = productsByCategory("Acessórios")
 
   return (
     <>

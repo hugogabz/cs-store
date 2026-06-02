@@ -21,16 +21,17 @@ export function ProductCard({
 }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
   const imageSrc = normalizeProductImageSrc(image)
+  const numericPrice = toNumberPrice(price)
 
   return (
-    <div className="group overflow-hidden rounded-3xl border border-[#E7E1D8] bg-white shadow-sm transition hover:shadow-lg">
+    <div className="group overflow-hidden rounded-3xl border border-[#E7E1D8] bg-white shadow-sm transition hover:shadow-md">
       <div className="relative h-64 overflow-hidden bg-[#F8F6F2] md:h-80">
         <Image
           src={imageSrc}
           alt={title}
           fill
           sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 78vw"
-          className="object-cover transition duration-300 group-hover:scale-[1.03]"
+          className="object-cover transition duration-300 group-hover:scale-[1.015]"
         />
       </div>
 
@@ -43,16 +44,16 @@ export function ProductCard({
           {title}
         </h3>
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-lg font-bold text-[#1A1A1A] md:text-xl">
-            {formatCurrency(price)}
+            {formatCurrency(numericPrice)}
           </p>
 
           <button
             onClick={() => {
               addItem({
                 title,
-                price: toNumberPrice(price),
+                price: numericPrice,
                 image: imageSrc,
               })
 
@@ -60,7 +61,7 @@ export function ProductCard({
                 description: title,
               })
             }}
-            className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#C89B2C] md:px-5"
+            className="w-full rounded-full bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#C89B2C] sm:w-auto md:px-5"
           >
             Comprar
           </button>

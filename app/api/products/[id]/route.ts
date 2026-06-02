@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
 import { getPrisma } from "@/services/prisma"
+import { toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
 
 export async function DELETE(
@@ -44,7 +45,7 @@ export async function PUT(
     data: {
       title: body.title,
       category: body.category,
-      price: Number(body.price),
+      price: toNumberPrice(body.price),
       image: normalizeProductImageSrc(body.image),
       featured: body.featured ?? false,
     },

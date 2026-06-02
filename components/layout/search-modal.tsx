@@ -1,9 +1,13 @@
 "use client"
 
 import Image from "next/image"
-import { Search, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Search, ShoppingBag, X } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useCartStore } from "@/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
+import { normalizeSearchText } from "@/utils/search"
 
 type Product = {
   id: string
@@ -24,6 +28,7 @@ export function SearchModal({
 }: SearchModalProps) {
   const [search, setSearch] = useState("")
   const [products, setProducts] = useState<Product[]>([])
+  const addItem = useCartStore((state) => state.addItem)
 
   useEffect(() => {
     if (!isOpen || products.length > 0) return
@@ -32,9 +37,14 @@ export function SearchModal({
 
     void fetch("/api/products")
       .then((response) => response.json())
-      .then((data) => {
+      .then((data: Product[]) => {
         if (!ignore) {
           setProducts(data)
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          toast.error("Não foi possível carregar a busca.")
         }
       })
 
@@ -43,88 +53,131 @@ export function SearchModal({
     }
   }, [isOpen, products.length])
 
-  const normalizedSearch = search
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  useEffect(() => {
+    if (!isOpen) return
 
-  const filteredProducts = products.filter((product) => {
-    const searchableText = `
-      ${product.title}
-      ${product.category}
-      ${product.price}
-    `
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose()
+      }
+    }
 
-    return searchableText.includes(normalizedSearch)
-  })
+    window.addEventListener("keydown", handleKeyDown)
 
-  const productsToShow =
-    normalizedSearch.length === 0
-      ? products
-      : filteredProducts
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, onClose])
+
+  const uniqueProducts = useMemo(
+    () => Array.from(new Map(products.map((product) => [product.id, product])).values()),
+    [products]
+  )
+
+  const normalizedSearch = normalizeSearchText(search)
+
+  const productsToShow = useMemo(() => {
+    if (!normalizedSearch) return uniqueProducts
+
+    return uniqueProducts.filter((product) => {
+      const searchableText = normalizeSearchText(`
+        ${product.title}
+        ${product.category}
+        ${product.price}
+        ${formatCurrency(product.price)}
+      `)
+
+      return searchableText.includes(normalizedSearch)
+    })
+  }, [normalizedSearch, uniqueProducts])
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/40 p-4 backdrop-blur-sm">
-      <div className="mx-auto mt-24 max-w-2xl rounded-[32px] bg-white p-6 shadow-2xl">
-        <div className="mb-6 flex items-center gap-4">
-          <Search className="text-[#B28A22]" />
+    <div
+      className="fixed inset-0 z-[80] bg-black/45 p-3 backdrop-blur-sm md:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="mx-auto flex max-h-[calc(100dvh-32px)] max-w-2xl flex-col rounded-[28px] bg-white p-4 shadow-2xl md:mt-24 md:max-h-[640px] md:rounded-[32px] md:p-6"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center gap-3 border-b border-[#E7E1D8] pb-4 md:mb-6 md:gap-4">
+          <Search className="shrink-0 text-[#B28A22]" />
 
           <input
             autoFocus
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar produtos..."
-            className="flex-1 bg-transparent text-lg outline-none"
+            placeholder="Buscar por nome, categoria ou preço..."
+            className="min-w-0 flex-1 bg-transparent text-base outline-none md:text-lg"
           />
 
           <button
             onClick={onClose}
             className="rounded-full p-2 transition hover:bg-neutral-100"
+            aria-label="Fechar busca"
           >
             <X />
           </button>
         </div>
 
-        <div className="max-h-[420px] space-y-4 overflow-y-auto">
-          {productsToShow.map((product) => (
-            <div
-              key={product.id}
-              className="flex items-center gap-4 rounded-2xl p-3 transition hover:bg-[#F8F6F2]"
-            >
-              <Image
-                src={normalizeProductImageSrc(product.image)}
-                alt={product.title}
-                width={64}
-                height={64}
-                className="h-16 w-16 rounded-2xl object-cover"
-              />
+        <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+          {productsToShow.map((product) => {
+            const imageSrc = normalizeProductImageSrc(product.image)
+            const numericPrice = toNumberPrice(product.price)
 
-              <div>
-                <h3 className="font-semibold text-[#1A1A1A]">
-                  {product.title}
-                </h3>
+            return (
+              <div
+                key={product.id}
+                className="flex gap-3 rounded-2xl border border-transparent p-2 transition hover:border-[#E7E1D8] hover:bg-[#F8F6F2] md:items-center md:gap-4 md:p-3"
+              >
+                <Image
+                  src={imageSrc}
+                  alt={product.title}
+                  width={72}
+                  height={72}
+                  className="h-16 w-16 shrink-0 rounded-2xl object-cover md:h-[72px] md:w-[72px]"
+                />
 
-                <p className="text-sm text-[#B28A22]">
-                  {product.category}{" "}
-                  {product.price.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="line-clamp-2 font-semibold text-[#1A1A1A]">
+                    {product.title}
+                  </h3>
+
+                  <p className="mt-1 text-sm text-[#B28A22]">
+                    {product.category} • {formatCurrency(numericPrice)}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    addItem({
+                      title: product.title,
+                      price: numericPrice,
+                      image: imageSrc,
+                    })
+
+                    toast.success("Produto adicionado", {
+                      description: product.title,
+                    })
+                  }}
+                  className="self-center rounded-full bg-[#D4AF37] p-3 text-black transition hover:bg-[#C89B2C] md:px-4"
+                  aria-label={`Adicionar ${product.title} ao carrinho`}
+                >
+                  <ShoppingBag size={18} />
+                </button>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {productsToShow.length === 0 && (
-            <p className="py-10 text-center text-neutral-500">
-              Nenhum produto encontrado.
-            </p>
+            <div className="rounded-3xl bg-[#F8F6F2] px-6 py-10 text-center">
+              <p className="font-semibold text-[#1A1A1A]">
+                Nenhum produto encontrado.
+              </p>
+              <p className="mt-2 text-sm text-[#6F6A63]">
+                Tente buscar por categoria, nome do produto ou valor.
+              </p>
+            </div>
           )}
         </div>
       </div>

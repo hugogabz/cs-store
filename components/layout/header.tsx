@@ -10,6 +10,7 @@ export function Header() {
 
   const openCart = useCartStore((state) => state.openCart)
   const items = useCartStore((state) => state.items)
+  const cartCount = items.reduce((acc, item) => acc + item.quantity, 0)
 
   return (
     <>
@@ -17,7 +18,7 @@ export function Header() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-8">
           <a
             href="#inicio"
-            className="logo-font text-3xl font-bold text-[#B28A22] transition hover:scale-[1.03] hover:text-[#D4AF37] md:text-4xl"
+            className="logo-font text-3xl font-bold text-[#B28A22] transition hover:text-[#D4AF37] md:text-4xl"
           >
             CS Store
           </a>
@@ -40,23 +41,28 @@ export function Header() {
             <button
               onClick={() => setIsSearchOpen(true)}
               className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]"
+              aria-label="Buscar produtos"
             >
               <Search size={20} />
             </button>
 
-            <button className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]">
+            <button
+              className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]"
+              aria-label="Área do cliente"
+            >
               <User size={20} />
             </button>
 
             <button
               onClick={openCart}
-              className="relative rounded-full bg-[#D4AF37] p-3 text-black transition hover:scale-105 hover:bg-[#C89B2C]"
+              className="relative rounded-full bg-[#D4AF37] p-3 text-black transition hover:bg-[#C89B2C]"
+              aria-label="Abrir carrinho"
             >
               <ShoppingBag size={20} />
 
-              {items.length > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-xs text-white">
-                  {items.length}
+                  {cartCount}
                 </span>
               )}
             </button>

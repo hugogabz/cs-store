@@ -25,7 +25,7 @@ const benefits = [
 
 export function BenefitsSection() {
   return (
-    <section className="bg-white px-4 py-16 md:px-8">
+    <section className="bg-white px-4 py-14 md:px-8 md:py-16">
       <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-4">
         {benefits.map((benefit) => {
           const Icon = benefit.icon
@@ -33,7 +33,7 @@ export function BenefitsSection() {
           return (
             <div
               key={benefit.title}
-              className="rounded-3xl border border-[#E7E1D8] bg-[#F8F6F2] p-6 transition hover:-translate-y-1 hover:shadow-lg"
+              className="rounded-3xl border border-[#E7E1D8] bg-[#F8F6F2] p-6 transition hover:shadow-md"
             >
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#B28A22]">
                 <Icon size={24} />

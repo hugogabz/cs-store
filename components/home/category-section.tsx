@@ -1,6 +1,7 @@
 import { ProductCard } from "@/components/products/product-card"
 
 type Product = {
+  id?: string
   title: string
   category: string
   price: string | number
@@ -41,18 +42,26 @@ export function CategorySection({
         </div>
 
         <div className="relative">
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#F8F6F2] to-transparent" />
+          {products.length > 0 && (
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#F8F6F2] to-transparent" />
+          )}
 
-          <div className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-4 scrollbar-hide md:grid md:grid-cols-2 md:gap-6 md:overflow-visible xl:grid-cols-3">
-            {products.map((product) => (
-              <div
-                key={product.title}
-                className="min-w-[78%] snap-start sm:min-w-[48%] md:min-w-0"
-              >
-                <ProductCard {...product} />
-              </div>
-            ))}
-          </div>
+          {products.length > 0 ? (
+            <div className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-4 scrollbar-hide md:grid md:grid-cols-2 md:gap-6 md:overflow-visible xl:grid-cols-3">
+              {products.map((product) => (
+                <div
+                  key={product.id ?? product.title}
+                  className="min-w-[78%] snap-start sm:min-w-[48%] md:min-w-0"
+                >
+                  <ProductCard {...product} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-white/70 p-8 text-sm text-[#6F6A63]">
+              Nenhum produto cadastrado nesta seção ainda.
+            </div>
+          )}
         </div>
       </div>
     </section>
