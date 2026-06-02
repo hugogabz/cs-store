@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { Upload } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -16,6 +17,15 @@ type Product = {
   featured: boolean
 }
 
+type UploadResponse = {
+  secureUrl: string
+  publicId: string
+  width: number
+  height: number
+}
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+
 export default function AdminPage() {
   const router = useRouter()
 
@@ -26,20 +36,41 @@ export default function AdminPage() {
   const [category, setCategory] = useState("Cabelos")
   const [price, setPrice] = useState("")
   const [image, setImage] = useState("")
+  const [localPreview, setLocalPreview] = useState<string | null>(null)
   const [featured, setFeatured] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
 
-  const imagePreviewSrc = image.trim()
-    ? normalizeProductImageSrc(image)
-    : null
+  const imagePreviewSrc = localPreview ?? (
+    image.trim() ? normalizeProductImageSrc(image) : null
+  )
+
+  useEffect(() => {
+    return () => {
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview)
+      }
+    }
+  }, [localPreview])
+
+  function setPreviewFromFile(file: File) {
+    const previewUrl = URL.createObjectURL(file)
+
+    if (localPreview) {
+      URL.revokeObjectURL(localPreview)
+    }
+
+    setLocalPreview(previewUrl)
+  }
 
   function resetForm() {
     setTitle("")
     setCategory("Cabelos")
     setPrice("")
     setImage("")
+    setLocalPreview(null)
     setFeatured(false)
     setEditingProductId(null)
   }
@@ -53,6 +84,54 @@ export default function AdminPage() {
 
     const data = await response.json()
     setProducts(data)
+  }
+
+  async function handleImageUpload(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem.")
+      return
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error("A imagem deve ter no máximo 5 MB.")
+      return
+    }
+
+    setPreviewFromFile(file)
+    setUploadingImage(true)
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (response.status === 401) {
+        router.push("/admin-login")
+        return
+      }
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Erro ao enviar imagem.")
+      }
+
+      const uploadedImage = data as UploadResponse
+      setImage(uploadedImage.secureUrl)
+      toast.success("Imagem enviada com sucesso.")
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar a imagem."
+      )
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   useEffect(() => {
@@ -91,6 +170,16 @@ export default function AdminPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
+
+    if (!image) {
+      toast.error("Selecione uma imagem antes de salvar o produto.")
+      return
+    }
+
+    if (uploadingImage) {
+      toast.error("Aguarde o upload da imagem terminar.")
+      return
+    }
 
     setLoading(true)
 
@@ -145,6 +234,7 @@ export default function AdminPage() {
     setCategory(product.category)
     setPrice(String(product.price))
     setImage(product.image)
+    setLocalPreview(null)
     setFeatured(product.featured)
 
     window.scrollTo({
@@ -240,11 +330,12 @@ export default function AdminPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-relaxed text-[#5C5C5C] md:text-base">
-              Gerencie os produtos da CS Store sem mexer no código.
+              Gerencie os produtos da CS Store, envie imagens e atualize o
+              catálogo sem mexer no código.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-[1fr_260px]">
+          <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-[1fr_280px]">
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium">
@@ -295,16 +386,33 @@ export default function AdminPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Caminho da imagem
+                  Imagem do produto
                 </label>
 
-                <input
-                  value={image}
-                  onChange={(event) => setImage(event.target.value)}
-                  required
-                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
-                  placeholder="/products/exemplo.jpg"
-                />
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#D4AF37] hover:text-[#B28A22]">
+                  <Upload size={18} />
+                  {uploadingImage ? "Enviando imagem..." : "Selecionar imagem"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={uploadingImage}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0]
+                      event.target.value = ""
+
+                      if (file) {
+                        void handleImageUpload(file)
+                      }
+                    }}
+                  />
+                </label>
+
+                {image && !uploadingImage && (
+                  <p className="mt-2 text-xs text-[#6F6A63]">
+                    Imagem pronta para salvar.
+                  </p>
+                )}
               </div>
 
               <label className="flex items-center gap-3 rounded-2xl border border-[#E7E1D8] p-4 md:col-span-2">
@@ -319,8 +427,8 @@ export default function AdminPage() {
 
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
                 <button
-                  disabled={loading}
-                  className="rounded-full bg-[#D4AF37] px-6 py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:opacity-60"
+                  disabled={loading || uploadingImage}
+                  className="rounded-full bg-[#D4AF37] px-6 py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading
                     ? "Salvando..."
@@ -347,18 +455,22 @@ export default function AdminPage() {
               </p>
 
               {imagePreviewSrc ? (
-                <Image
-                  src={imagePreviewSrc}
-                  alt="Preview do produto"
-                  width={320}
-                  height={320}
-                  className="aspect-square w-full rounded-2xl object-cover"
+                <div
+                  className="aspect-square w-full rounded-2xl bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url("${imagePreviewSrc}")`,
+                  }}
                 />
               ) : (
-                <div className="flex aspect-square items-center justify-center rounded-2xl bg-white text-center text-sm text-[#6F6A63]">
-                  Informe um caminho como /products/exemplo.jpg
+                <div className="flex aspect-square items-center justify-center rounded-2xl bg-white px-4 text-center text-sm text-[#6F6A63]">
+                  Selecione uma imagem para enviar ao Cloudinary.
                 </div>
               )}
+
+              <p className="mt-3 text-xs leading-relaxed text-[#6F6A63]">
+                Produtos antigos com imagens locais continuam funcionando. Para
+                novos produtos, selecione uma imagem e salve após o upload.
+              </p>
             </div>
           </form>
         </section>
