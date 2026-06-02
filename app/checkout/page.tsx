@@ -330,10 +330,7 @@ export default function CheckoutPage() {
                             <div className="flex items-start justify-between gap-4">
                               <div>
                                 <p className="font-semibold text-[#1A1A1A]">
-                                  {option.name}
-                                </p>
-                                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#8A8A8A]">
-                                  {option.company}
+                                  {option.name} — {option.company}
                                 </p>
                               </div>
 
@@ -343,7 +340,7 @@ export default function CheckoutPage() {
                             </div>
 
                             <p className="mt-3 text-sm text-[#6F6A63]">
-                              Prazo estimado: {option.deliveryTime} dias úteis
+                              Prazo: {option.deliveryTime} dias
                             </p>
                           </button>
                         )

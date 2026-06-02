@@ -47,6 +47,8 @@ type MelhorEnvioService = {
   error?: unknown
 }
 
+type CorreiosShippingKind = "pac" | "sedex"
+
 const DEFAULT_PRODUCT_DIMENSIONS = {
   weight: 0.3,
   height: 8,
@@ -96,6 +98,13 @@ function normalizeDeliveryTime(value: unknown) {
   return deliveryTime
 }
 
+function normalizeText(value: unknown) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+}
+
 function getMelhorEnvioApiUrl() {
   const baseUrl =
     process.env.MELHOR_ENVIO_API_URL ?? "https://www.melhorenvio.com.br"
@@ -112,25 +121,67 @@ function calculateMockShipping(): ShippingOption[] {
     {
       id: "pac",
       name: "Correios PAC",
-      company: "Correios",
+      company: "Econômico",
       price: 18.9,
       deliveryTime: 6,
     },
     {
       id: "sedex",
       name: "Correios Sedex",
-      company: "Correios",
+      company: "Expresso",
       price: 32.5,
       deliveryTime: 2,
     },
-    {
-      id: "jadlog",
-      name: "Jadlog Economico",
-      company: "Jadlog",
-      price: 22.9,
-      deliveryTime: 4,
-    },
   ]
+}
+
+function getCorreiosShippingKind(
+  service: MelhorEnvioService
+): CorreiosShippingKind | null {
+  const serviceId = String(service.id ?? "")
+  const companyName = normalizeText(service.company?.name)
+  const serviceName = normalizeText(service.name)
+  const isCorreios = companyName.includes("CORREIOS") || ["1", "2"].includes(serviceId)
+
+  if (!isCorreios) {
+    return null
+  }
+
+  if (serviceId === "1" || serviceName.includes("PAC")) {
+    return "pac"
+  }
+
+  if (serviceId === "2" || serviceName.includes("SEDEX")) {
+    return "sedex"
+  }
+
+  return null
+}
+
+function keepCheapestCorreiosOptions(
+  options: Array<ShippingOption & { kind: CorreiosShippingKind }>
+) {
+  const cheapestByKind = options.reduce<
+    Partial<Record<CorreiosShippingKind, ShippingOption>>
+  >((acc, option) => {
+    const currentOption = acc[option.kind]
+
+    if (!currentOption || option.price < currentOption.price) {
+      acc[option.kind] = {
+        id: option.kind,
+        name: option.kind === "pac" ? "Correios PAC" : "Correios SEDEX",
+        company: option.kind === "pac" ? "Econômico" : "Expresso",
+        price: option.price,
+        deliveryTime: option.deliveryTime,
+      }
+    }
+
+    return acc
+  }, {})
+
+  return Object.values(cheapestByKind)
+    .sort((firstOption, secondOption) => firstOption.price - secondOption.price)
+    .slice(0, 2)
 }
 
 function normalizeMelhorEnvioResponse(data: unknown): ShippingOption[] {
@@ -138,8 +189,14 @@ function normalizeMelhorEnvioResponse(data: unknown): ShippingOption[] {
     return []
   }
 
-  return data.flatMap((service: MelhorEnvioService) => {
+  const correiosOptions = data.flatMap((service: MelhorEnvioService) => {
     if (service.error) {
+      return []
+    }
+
+    const kind = getCorreiosShippingKind(service)
+
+    if (!kind) {
       return []
     }
 
@@ -154,8 +211,9 @@ function normalizeMelhorEnvioResponse(data: unknown): ShippingOption[] {
     return [
       {
         id: String(service.id ?? service.name ?? price),
+        kind,
         name: service.name ?? "Frete",
-        company: service.company?.name ?? "Melhor Envio",
+        company: service.company?.name ?? "Correios",
         price,
         deliveryTime: normalizeDeliveryTime(
           service.custom_delivery_time ?? service.delivery_time
@@ -163,6 +221,8 @@ function normalizeMelhorEnvioResponse(data: unknown): ShippingOption[] {
       },
     ]
   })
+
+  return keepCheapestCorreiosOptions(correiosOptions)
 }
 
 async function calculateMelhorEnvioShipping(payload: MelhorEnvioPayload) {
