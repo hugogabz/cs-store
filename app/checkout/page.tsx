@@ -3,6 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, CreditCard, Lock, ShieldCheck, Truck } from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
@@ -10,8 +12,24 @@ import { normalizeProductImageSrc } from "@/utils/images"
 const inputClass =
   "rounded-xl border border-[#E7E1D8] bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#B89535]"
 
+type ReservationState = {
+  reservationId: string
+  expiresAt: string
+}
+
+function formatReservationTime(seconds: number) {
+  const safeSeconds = Math.max(0, seconds)
+  const minutes = Math.floor(safeSeconds / 60)
+  const remainingSeconds = safeSeconds % 60
+
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+}
+
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items)
+  const [reservation, setReservation] = useState<ReservationState | null>(null)
+  const [secondsRemaining, setSecondsRemaining] = useState(0)
+  const [reserving, setReserving] = useState(false)
 
   const total = items.reduce((acc, item) => {
     return acc + toNumberPrice(item.price) * Math.max(1, item.quantity)
@@ -22,6 +40,85 @@ export default function CheckoutPage() {
     (acc, item) => acc + Math.max(1, item.quantity),
     0
   )
+  const hasActiveReservation = Boolean(reservation && secondsRemaining > 0)
+
+  useEffect(() => {
+    if (!reservation) {
+      return
+    }
+
+    const currentReservation = reservation
+
+    function updateCountdown() {
+      const expiresAt = new Date(currentReservation.expiresAt).getTime()
+      const seconds = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
+
+      setSecondsRemaining(seconds)
+    }
+
+    updateCountdown()
+    const interval = window.setInterval(updateCountdown, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [reservation])
+
+  async function handleReserveStock() {
+    if (items.length === 0) {
+      toast.error("Carrinho vazio. Adicione produtos antes de reservar.")
+      return
+    }
+
+    if (hasActiveReservation) {
+      toast.info("Os produtos já estão reservados.")
+      return
+    }
+
+    const hasInvalidProduct = items.some((item) => !item.productId)
+
+    if (hasInvalidProduct) {
+      toast.error("Produto inválido no carrinho. Remova e adicione novamente.")
+      return
+    }
+
+    setReserving(true)
+
+    try {
+      const response = await fetch("/api/stock/reserve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            productId: item.productId,
+            title: item.title,
+            quantity: Math.max(1, item.quantity),
+          })),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Não foi possível reservar o estoque.")
+      }
+
+      setReservation({
+        reservationId: data.reservationId,
+        expiresAt: data.expiresAt,
+      })
+
+      toast.success("Seus produtos estão reservados por 15 minutos.")
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível reservar o estoque."
+      )
+    } finally {
+      setReserving(false)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-10">
@@ -207,17 +304,45 @@ export default function CheckoutPage() {
             </div>
 
             <button
-              disabled={items.length === 0}
+              disabled={items.length === 0 || reserving}
+              onClick={handleReserveStock}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#B89535] py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
               <CreditCard size={20} />
-              Ir para pagamento
+              {reserving
+                ? "Reservando..."
+                : hasActiveReservation
+                  ? "Pagamento em breve"
+                  : "Ir para pagamento"}
             </button>
 
+            {reservation && (
+              <div className="mt-4 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 text-sm">
+                {hasActiveReservation ? (
+                  <>
+                    <p className="font-semibold text-[#1A1A1A]">
+                      Seus produtos estão reservados por 15 minutos.
+                    </p>
+                    <p className="mt-2 text-[#6F6A63]">
+                      Tempo restante:{" "}
+                      <span className="font-semibold text-[#B89535]">
+                        {formatReservationTime(secondsRemaining)}
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="font-semibold text-red-500">
+                    A reserva expirou. Calcule novamente antes de pagar.
+                  </p>
+                )}
+              </div>
+            )}
+
             <p className="mt-4 text-center text-xs leading-relaxed text-[#8A8A8A]">
-              Integração de pagamento ainda não habilitada. Este botão está
-              preparado para receber o gateway no próximo passo.
+              Integração de pagamento ainda não habilitada. No próximo passo,
+              este fluxo chamará o Mercado Pago; ao pagamento aprovado, o
+              estoque será baixado e as reservas deste pedido serão removidas.
             </p>
           </aside>
         </div>

@@ -15,5 +15,24 @@ model Product {
   price     Float
   image     String
   featured  Boolean  @default(false)
+  stock     Int      @default(0)
+  rating    Float    @default(4.8)
+  ratingCount Int    @default(0)
   createdAt DateTime @default(now())
+  reservations StockReservation[]
+}
+
+model StockReservation {
+  id        String   @id @default(cuid())
+  groupId   String
+  productId String
+  quantity  Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([productId])
+  @@index([expiresAt])
 }

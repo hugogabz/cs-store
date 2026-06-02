@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { X } from "lucide-react"
+import { toast } from "sonner"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
@@ -74,6 +75,9 @@ export function CartDrawer() {
 
           {items.map((item) => {
             const quantity = Math.max(1, item.quantity)
+            const stock = Number(item.stock)
+            const hasLimitedStock = Number.isFinite(stock)
+            const isAtStockLimit = hasLimitedStock && quantity >= stock
 
             return (
               <div
@@ -97,6 +101,12 @@ export function CartDrawer() {
                     {formatCurrency(item.price)}
                   </p>
 
+                  {hasLimitedStock && (
+                    <p className="mt-1 text-xs text-[#6F6A63]">
+                      Estoque: {Math.max(0, stock)} unidades
+                    </p>
+                  )}
+
                   <div className="mt-3 flex items-center gap-3">
                     <button
                       onClick={() => decreaseQuantity(item.id)}
@@ -111,8 +121,16 @@ export function CartDrawer() {
                     </span>
 
                     <button
-                      onClick={() => increaseQuantity(item.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7E1D8] transition hover:border-[#D4AF37]"
+                      onClick={() => {
+                        const wasIncreased = increaseQuantity(item.id)
+
+                        if (!wasIncreased) {
+                          toast.error("Estoque insuficiente")
+                        }
+                      }}
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border border-[#E7E1D8] transition hover:border-[#D4AF37] ${
+                        isAtStockLimit ? "cursor-not-allowed opacity-40" : ""
+                      }`}
                       aria-label={`Aumentar quantidade de ${item.title}`}
                     >
                       +

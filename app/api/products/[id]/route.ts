@@ -3,6 +3,11 @@ import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-aut
 import { getPrisma } from "@/services/prisma"
 import { toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
+import {
+  normalizeRating,
+  normalizeRatingCount,
+  normalizeStock,
+} from "@/utils/product-meta"
 
 export async function DELETE(
   _request: Request,
@@ -49,6 +54,9 @@ export async function PUT(
       price: toNumberPrice(body.price),
       image: normalizeProductImageSrc(body.image),
       featured: body.featured ?? false,
+      stock: normalizeStock(body.stock),
+      rating: normalizeRating(body.rating),
+      ratingCount: normalizeRatingCount(body.ratingCount),
     },
   })
 

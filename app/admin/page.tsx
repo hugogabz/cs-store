@@ -16,6 +16,9 @@ type Product = {
   price: number
   image: string
   featured: boolean
+  stock: number
+  rating: number
+  ratingCount: number
 }
 
 type UploadResponse = {
@@ -39,6 +42,7 @@ export default function AdminPage() {
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("Cabelos")
   const [price, setPrice] = useState("")
+  const [stock, setStock] = useState("0")
   const [image, setImage] = useState("")
   const [localPreview, setLocalPreview] = useState<string | null>(null)
   const [featured, setFeatured] = useState(false)
@@ -74,6 +78,7 @@ export default function AdminPage() {
     setDescription("")
     setCategory("Cabelos")
     setPrice("")
+    setStock("0")
     setImage("")
     setLocalPreview(null)
     setFeatured(false)
@@ -81,7 +86,7 @@ export default function AdminPage() {
   }
 
   async function loadProducts() {
-    const response = await fetch("/api/products")
+    const response = await fetch("/api/products?scope=admin")
 
     if (!response.ok) {
       throw new Error("Erro ao carregar produtos.")
@@ -149,7 +154,7 @@ export default function AdminPage() {
           return null
         }
 
-        return fetch("/api/products")
+        return fetch("/api/products?scope=admin")
       })
       .then((response) => response?.json())
       .then((data) => {
@@ -203,6 +208,7 @@ export default function AdminPage() {
             description,
             category,
             price,
+            stock,
             image,
             featured,
           }),
@@ -240,6 +246,7 @@ export default function AdminPage() {
     setDescription(product.description ?? "")
     setCategory(product.category)
     setPrice(String(product.price))
+    setStock(String(product.stock ?? 0))
     setImage(product.image)
     setLocalPreview(null)
     setFeatured(product.featured)
@@ -286,6 +293,7 @@ export default function AdminPage() {
       ${product.description ?? ""}
       ${product.category}
       ${product.price}
+      ${product.stock}
     `)
 
     return productText.includes(searchText)
@@ -406,6 +414,23 @@ export default function AdminPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium">
+                  Estoque
+                </label>
+
+                <input
+                  value={stock}
+                  onChange={(event) => setStock(event.target.value)}
+                  required
+                  type="number"
+                  step="1"
+                  min="0"
+                  className={inputClass}
+                  placeholder="Ex: 12"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
                   Imagem do produto
                 </label>
 
@@ -514,7 +539,12 @@ export default function AdminPage() {
           </div>
 
           <div className="space-y-4">
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product) => {
+              const productStock = Math.max(0, Math.floor(Number(product.stock) || 0))
+              const isOutOfStock = productStock === 0
+              const isLowStock = productStock > 0 && productStock <= 5
+
+              return (
               <div
                 key={product.id}
                 className="flex flex-col gap-4 rounded-2xl border border-[#E7E1D8] p-4 md:flex-row md:items-center md:justify-between"
@@ -538,7 +568,8 @@ export default function AdminPage() {
                       {product.price.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      })}
+                      })}{" "}
+                      • Estoque: {productStock}
                     </p>
 
                     {product.description && (
@@ -547,11 +578,25 @@ export default function AdminPage() {
                       </p>
                     )}
 
-                    {product.featured && (
-                      <span className="mt-2 inline-block rounded-full bg-[#B89535]/15 px-3 py-1 text-xs font-semibold text-[#8A6800]">
-                        Destaque
-                      </span>
-                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {product.featured && (
+                        <span className="inline-block rounded-full bg-[#B89535]/15 px-3 py-1 text-xs font-semibold text-[#8A6800]">
+                          Destaque
+                        </span>
+                      )}
+
+                      {isOutOfStock && (
+                        <span className="inline-block rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
+                          Sem estoque
+                        </span>
+                      )}
+
+                      {isLowStock && (
+                        <span className="inline-block rounded-full bg-[#B89535]/15 px-3 py-1 text-xs font-semibold text-[#8A6800]">
+                          Estoque baixo
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -571,7 +616,8 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
-            ))}
+              )
+            })}
 
             {filteredProducts.length === 0 && (
               <div className="rounded-2xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-6 text-center text-[#5C5C5C]">

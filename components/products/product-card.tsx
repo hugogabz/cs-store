@@ -9,35 +9,50 @@ import { normalizeProductImageSrc } from "@/utils/images"
 import { toast } from "sonner"
 
 type ProductCardProps = {
+  id?: string
   title: string
   description?: string | null
   category: string
   price: string | number
   image: string
+  stock: number
+  rating?: number
+  ratingCount?: number
 }
 
 export function ProductCard({
+  id,
   title,
   description,
   category,
   price,
   image,
+  stock = 0,
+  rating = 4.8,
+  ratingCount = 0,
 }: ProductCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const addItem = useCartStore((state) => state.addItem)
   const imageSrc = normalizeProductImageSrc(image)
   const numericPrice = toNumberPrice(price)
+  const availableStock = Math.max(0, Math.floor(Number(stock) || 0))
+  const isUnavailable = availableStock === 0
+  const stockLabel = isUnavailable
+    ? "Produto indisponível"
+    : availableStock <= 5
+      ? "Últimas unidades"
+      : "Em estoque"
 
   return (
     <>
       <div className="group overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white shadow-[0_10px_30px_rgba(26,26,26,0.04)] transition duration-300 hover:border-[#D8CBB9] hover:shadow-[0_14px_34px_rgba(26,26,26,0.07)]">
-        <div className="relative h-40 overflow-hidden bg-[#F8F6F2] sm:h-44 md:h-52">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F8F6F2]">
           <Image
             src={imageSrc}
             alt={title}
             fill
             sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 44vw"
-            className="object-cover transition duration-500 group-hover:scale-[1.01]"
+            className="object-contain p-3 transition duration-500 group-hover:scale-[1.01]"
           />
         </div>
 
@@ -54,22 +69,42 @@ export function ProductCard({
             {formatCurrency(numericPrice)}
           </p>
 
+          <p
+            className={`text-xs font-semibold ${
+              isUnavailable
+                ? "text-red-500"
+                : availableStock <= 5
+                  ? "text-[#B89535]"
+                  : "text-emerald-700"
+            }`}
+          >
+            {stockLabel}
+          </p>
+
           <div className="flex flex-col gap-2">
             <button
+              disabled={isUnavailable}
               onClick={() => {
-                addItem({
+                const wasAdded = addItem({
+                  productId: id,
                   title,
                   price: numericPrice,
                   image: imageSrc,
+                  stock: availableStock,
                 })
+
+                if (!wasAdded) {
+                  toast.error("Estoque insuficiente")
+                  return
+                }
 
                 toast.success("Produto adicionado", {
                   description: title,
                 })
               }}
-              className="w-full rounded-full bg-[#B89535] px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-[#A7832E]"
+              className="w-full rounded-full bg-[#B89535] px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63]"
             >
-              Comprar
+              {isUnavailable ? "Indisponível" : "Comprar"}
             </button>
 
             <button
@@ -90,6 +125,10 @@ export function ProductCard({
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         price={numericPrice}
+        rating={rating}
+        ratingCount={ratingCount}
+        stock={availableStock}
+        productId={id}
         title={title}
       />
     </>

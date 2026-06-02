@@ -5,9 +5,11 @@ import { normalizeProductImageSrc } from "@/utils/images"
 
 type CartItem = {
   id: number
+  productId?: string | null
   title: string
   price: number
   image: string
+  stock: number
   quantity: number
 }
 
@@ -16,11 +18,11 @@ type CartStore = {
 
   addItem: (
     item: Omit<CartItem, "id" | "quantity">
-  ) => void
+  ) => boolean
 
   removeItem: (id: number) => void
 
-  increaseQuantity: (id: number) => void
+  increaseQuantity: (id: number) => boolean
 
   decreaseQuantity: (id: number) => void
 
@@ -31,33 +33,69 @@ type CartStore = {
   closeCart: () => void
 }
 
+function getAvailableStock(stock: number | undefined) {
+  if (stock === undefined) return Number.POSITIVE_INFINITY
+
+  const parsedStock = Number(stock)
+
+  if (!Number.isFinite(parsedStock)) return 0
+
+  return Math.max(0, Math.floor(parsedStock))
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: [],
 
       isOpen: false,
 
-      addItem: (item) =>
+      addItem: (item) => {
+        const availableStock = getAvailableStock(item.stock)
+
+        if (availableStock <= 0) {
+          return false
+        }
+
+        const state = get()
+        const existingItem = state.items.find((product) =>
+          item.productId
+            ? product.productId === item.productId
+            : product.title === item.title
+        )
+
+        if (existingItem && Math.max(1, existingItem.quantity) >= availableStock) {
+          return false
+        }
+
         set((state) => {
           const normalizedItem = {
             ...item,
             image: normalizeProductImageSrc(item.image),
             price: toNumberPrice(item.price),
+            stock: availableStock,
           }
 
-          const existingItem = state.items.find(
-            (product) => product.title === normalizedItem.title
+          const existingItem = state.items.find((product) =>
+            normalizedItem.productId
+              ? product.productId === normalizedItem.productId
+              : product.title === normalizedItem.title
           )
 
           if (existingItem) {
             return {
               items: state.items.map((product) =>
-                product.title === normalizedItem.title
+                (
+                  normalizedItem.productId
+                    ? product.productId === normalizedItem.productId
+                    : product.title === normalizedItem.title
+                )
                   ? {
                       ...product,
+                      productId: normalizedItem.productId,
                       price: normalizedItem.price,
                       image: normalizedItem.image,
+                      stock: normalizedItem.stock,
                       quantity: Math.max(1, product.quantity) + 1,
                     }
                   : product
@@ -75,24 +113,41 @@ export const useCartStore = create<CartStore>()(
               },
             ],
           }
-        }),
+        })
+
+        return true
+      },
 
       removeItem: (id) =>
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         })),
 
-      increaseQuantity: (id) =>
+      increaseQuantity: (id) => {
+        const item = get().items.find((cartItem) => cartItem.id === id)
+
+        if (!item) return false
+
+        const availableStock = getAvailableStock(item.stock)
+
+        if (availableStock <= 0 || Math.max(1, item.quantity) >= availableStock) {
+          return false
+        }
+
         set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id
+          items: state.items.map((cartItem) =>
+            cartItem.id === id
               ? {
-                  ...item,
-                  quantity: Math.max(1, item.quantity) + 1,
+                  ...cartItem,
+                  stock: availableStock,
+                  quantity: Math.max(1, cartItem.quantity) + 1,
                 }
-              : item
+              : cartItem
           ),
-        })),
+        }))
+
+        return true
+      },
 
       decreaseQuantity: (id) =>
         set((state) => ({

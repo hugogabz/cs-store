@@ -12,6 +12,9 @@ type Product = {
   category: string
   price: string | number
   image: string
+  stock: number
+  rating: number
+  ratingCount: number
 }
 
 type CategorySectionProps = {

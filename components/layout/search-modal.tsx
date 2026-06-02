@@ -16,6 +16,9 @@ type Product = {
   category: string
   price: number
   image: string
+  stock: number
+  rating: number
+  ratingCount: number
 }
 
 type SearchModalProps = {
@@ -126,6 +129,8 @@ export function SearchModal({
           {productsToShow.map((product) => {
             const imageSrc = normalizeProductImageSrc(product.image)
             const numericPrice = toNumberPrice(product.price)
+            const availableStock = Math.max(0, Math.floor(Number(product.stock) || 0))
+            const isUnavailable = availableStock === 0
 
             return (
               <div
@@ -148,21 +153,45 @@ export function SearchModal({
                   <p className="mt-1 text-sm text-[#B89535]">
                     {product.category} • {formatCurrency(numericPrice)}
                   </p>
+
+                  <p
+                    className={`mt-1 text-xs font-semibold ${
+                      isUnavailable
+                        ? "text-red-500"
+                        : availableStock <= 5
+                          ? "text-[#B89535]"
+                          : "text-emerald-700"
+                    }`}
+                  >
+                    {isUnavailable
+                      ? "Produto indisponível"
+                      : availableStock <= 5
+                        ? "Últimas unidades"
+                        : "Em estoque"}
+                  </p>
                 </div>
 
                 <button
+                  disabled={isUnavailable}
                   onClick={() => {
-                    addItem({
+                    const wasAdded = addItem({
+                      productId: product.id,
                       title: product.title,
                       price: numericPrice,
                       image: imageSrc,
+                      stock: availableStock,
                     })
+
+                    if (!wasAdded) {
+                      toast.error("Estoque insuficiente")
+                      return
+                    }
 
                     toast.success("Produto adicionado", {
                       description: product.title,
                     })
                   }}
-                  className="self-center rounded-full bg-[#B89535] p-3 text-black transition hover:bg-[#A7832E] md:px-4"
+                  className="self-center rounded-full bg-[#B89535] p-3 text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63] md:px-4"
                   aria-label={`Adicionar ${product.title} ao carrinho`}
                 >
                   <ShoppingBag size={18} />

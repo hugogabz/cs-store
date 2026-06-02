@@ -14,6 +14,10 @@ type ProductDetailModalProps = {
   isOpen: boolean
   onClose: () => void
   price: string | number
+  productId?: string
+  rating?: number
+  ratingCount?: number
+  stock: number
   title: string
 }
 
@@ -24,6 +28,10 @@ export function ProductDetailModal({
   isOpen,
   onClose,
   price,
+  productId,
+  rating = 4.8,
+  ratingCount = 0,
+  stock = 0,
   title,
 }: ProductDetailModalProps) {
   const addItem = useCartStore((state) => state.addItem)
@@ -32,6 +40,15 @@ export function ProductDetailModal({
 
   const imageSrc = normalizeProductImageSrc(image)
   const numericPrice = toNumberPrice(price)
+  const availableStock = Math.max(0, Math.floor(Number(stock) || 0))
+  const isUnavailable = availableStock === 0
+  const displayRating = Math.min(5, Math.max(4, Number(rating) || 4.8))
+  const displayRatingCount = Math.max(0, Math.floor(Number(ratingCount) || 0))
+  const stockLabel = isUnavailable
+    ? "Produto indisponível"
+    : availableStock <= 5
+      ? "Últimas unidades"
+      : "Em estoque"
 
   return (
     <div
@@ -42,13 +59,13 @@ export function ProductDetailModal({
         className="mx-auto flex max-h-[calc(100dvh-24px)] max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:max-h-[calc(100dvh-48px)] md:grid md:grid-cols-[0.95fr_1.05fr]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative min-h-72 bg-[#F8F6F2] md:min-h-[520px]">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F8F6F2] md:self-center">
           <Image
             src={imageSrc}
             alt={title}
             fill
             sizes="(min-width: 768px) 45vw, 100vw"
-            className="object-cover"
+            className="object-contain p-4 md:p-6"
           />
         </div>
 
@@ -75,6 +92,34 @@ export function ProductDetailModal({
             {formatCurrency(numericPrice)}
           </p>
 
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold tracking-[0.08em] text-[#B89535]">
+              ★★★★★
+            </span>
+
+            <span className="text-sm text-[#5C5C5C]">
+              {displayRating.toFixed(1)} ({displayRatingCount} avaliações)
+            </span>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4">
+            <p
+              className={`text-sm font-semibold ${
+                isUnavailable
+                  ? "text-red-500"
+                  : availableStock <= 5
+                    ? "text-[#B89535]"
+                    : "text-emerald-700"
+              }`}
+            >
+              {stockLabel}
+            </p>
+
+            <p className="mt-1 text-sm text-[#5C5C5C]">
+              Estoque: {availableStock} unidades
+            </p>
+          </div>
+
           <div className="mt-6 border-t border-[#E7E1D8] pt-6">
             <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8A8A8A]">
               Descrição
@@ -86,20 +131,28 @@ export function ProductDetailModal({
           </div>
 
           <button
+            disabled={isUnavailable}
             onClick={() => {
-              addItem({
+              const wasAdded = addItem({
+                productId,
                 title,
                 price: numericPrice,
                 image: imageSrc,
+                stock: availableStock,
               })
+
+              if (!wasAdded) {
+                toast.error("Estoque insuficiente")
+                return
+              }
 
               toast.success("Produto adicionado", {
                 description: title,
               })
             }}
-            className="mt-8 rounded-full bg-[#B89535] px-6 py-3.5 font-semibold text-black transition hover:bg-[#A7832E]"
+            className="mt-8 rounded-full bg-[#B89535] px-6 py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63]"
           >
-            Adicionar ao carrinho
+            {isUnavailable ? "Produto indisponível" : "Adicionar ao carrinho"}
           </button>
         </div>
       </div>
