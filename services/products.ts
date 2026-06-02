@@ -16,6 +16,10 @@ export type Product = {
   stock: number
   rating: number
   ratingCount: number
+  weight: number | null
+  height: number | null
+  width: number | null
+  length: number | null
   createdAt: Date
 }
 

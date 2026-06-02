@@ -4,6 +4,7 @@ import { getPrisma } from "@/services/prisma"
 import { toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
 import {
+  normalizeOptionalNumber,
   normalizeRating,
   normalizeRatingCount,
   normalizeStock,
@@ -57,6 +58,10 @@ export async function PUT(
       stock: normalizeStock(body.stock),
       rating: normalizeRating(body.rating),
       ratingCount: normalizeRatingCount(body.ratingCount),
+      weight: normalizeOptionalNumber(body.weight),
+      height: normalizeOptionalNumber(body.height),
+      width: normalizeOptionalNumber(body.width),
+      length: normalizeOptionalNumber(body.length),
     },
   })
 

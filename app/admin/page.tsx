@@ -19,6 +19,10 @@ type Product = {
   stock: number
   rating: number
   ratingCount: number
+  weight: number | null
+  height: number | null
+  width: number | null
+  length: number | null
 }
 
 type UploadResponse = {
@@ -43,6 +47,10 @@ export default function AdminPage() {
   const [category, setCategory] = useState("Cabelos")
   const [price, setPrice] = useState("")
   const [stock, setStock] = useState("0")
+  const [weight, setWeight] = useState("")
+  const [height, setHeight] = useState("")
+  const [width, setWidth] = useState("")
+  const [length, setLength] = useState("")
   const [image, setImage] = useState("")
   const [localPreview, setLocalPreview] = useState<string | null>(null)
   const [featured, setFeatured] = useState(false)
@@ -79,6 +87,10 @@ export default function AdminPage() {
     setCategory("Cabelos")
     setPrice("")
     setStock("0")
+    setWeight("")
+    setHeight("")
+    setWidth("")
+    setLength("")
     setImage("")
     setLocalPreview(null)
     setFeatured(false)
@@ -209,6 +221,10 @@ export default function AdminPage() {
             category,
             price,
             stock,
+            weight,
+            height,
+            width,
+            length,
             image,
             featured,
           }),
@@ -247,6 +263,10 @@ export default function AdminPage() {
     setCategory(product.category)
     setPrice(String(product.price))
     setStock(String(product.stock ?? 0))
+    setWeight(product.weight ? String(product.weight) : "")
+    setHeight(product.height ? String(product.height) : "")
+    setWidth(product.width ? String(product.width) : "")
+    setLength(product.length ? String(product.length) : "")
     setImage(product.image)
     setLocalPreview(null)
     setFeatured(product.featured)
@@ -294,6 +314,10 @@ export default function AdminPage() {
       ${product.category}
       ${product.price}
       ${product.stock}
+      ${product.weight ?? ""}
+      ${product.height ?? ""}
+      ${product.width ?? ""}
+      ${product.length ?? ""}
     `)
 
     return productText.includes(searchText)
@@ -427,6 +451,72 @@ export default function AdminPage() {
                   className={inputClass}
                   placeholder="Ex: 12"
                 />
+              </div>
+
+              <div className="grid gap-4 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 md:col-span-2 md:grid-cols-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    Peso (kg)
+                  </label>
+
+                  <input
+                    value={weight}
+                    onChange={(event) => setWeight(event.target.value)}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className={inputClass}
+                    placeholder="0.30"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    Altura (cm)
+                  </label>
+
+                  <input
+                    value={height}
+                    onChange={(event) => setHeight(event.target.value)}
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    className={inputClass}
+                    placeholder="8"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    Largura (cm)
+                  </label>
+
+                  <input
+                    value={width}
+                    onChange={(event) => setWidth(event.target.value)}
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    className={inputClass}
+                    placeholder="16"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    Comprimento (cm)
+                  </label>
+
+                  <input
+                    value={length}
+                    onChange={(event) => setLength(event.target.value)}
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    className={inputClass}
+                    placeholder="24"
+                  />
+                </div>
               </div>
 
               <div>

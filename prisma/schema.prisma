@@ -18,6 +18,10 @@ model Product {
   stock     Int      @default(0)
   rating    Float    @default(4.8)
   ratingCount Int    @default(0)
+  weight    Float?
+  height    Float?
+  width     Float?
+  length    Float?
   createdAt DateTime @default(now())
   reservations StockReservation[]
 }

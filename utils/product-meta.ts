@@ -32,3 +32,13 @@ export function normalizeRatingCount(value: unknown) {
 
   return Math.max(0, ratingCount)
 }
+
+export function normalizeOptionalNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") return null
+
+  const number = Number(value)
+
+  if (!Number.isFinite(number)) return null
+
+  return Math.max(0, number)
+}

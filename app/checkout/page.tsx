@@ -17,6 +17,14 @@ type ReservationState = {
   expiresAt: string
 }
 
+type ShippingOption = {
+  id: string
+  name: string
+  company: string
+  price: number
+  deliveryTime: number
+}
+
 function formatReservationTime(seconds: number) {
   const safeSeconds = Math.max(0, seconds)
   const minutes = Math.floor(safeSeconds / 60)
@@ -30,12 +38,22 @@ export default function CheckoutPage() {
   const [reservation, setReservation] = useState<ReservationState | null>(null)
   const [secondsRemaining, setSecondsRemaining] = useState(0)
   const [reserving, setReserving] = useState(false)
+  const [cepDestino, setCepDestino] = useState("")
+  const [calculatingShipping, setCalculatingShipping] = useState(false)
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
+  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null)
 
-  const total = items.reduce((acc, item) => {
+  const subtotal = items.reduce((acc, item) => {
     return acc + toNumberPrice(item.price) * Math.max(1, item.quantity)
   }, 0)
 
-  const formattedTotal = formatCurrency(total)
+  const shippingTotal = selectedShipping?.price ?? 0
+  const finalTotal = subtotal + shippingTotal
+  const formattedSubtotal = formatCurrency(subtotal)
+  const formattedShipping = selectedShipping
+    ? formatCurrency(shippingTotal)
+    : "Calculado depois"
+  const formattedTotal = formatCurrency(finalTotal)
   const cartCount = items.reduce(
     (acc, item) => acc + Math.max(1, item.quantity),
     0
@@ -43,9 +61,7 @@ export default function CheckoutPage() {
   const hasActiveReservation = Boolean(reservation && secondsRemaining > 0)
 
   useEffect(() => {
-    if (!reservation) {
-      return
-    }
+    if (!reservation) return
 
     const currentReservation = reservation
 
@@ -117,6 +133,61 @@ export default function CheckoutPage() {
       )
     } finally {
       setReserving(false)
+    }
+  }
+
+  async function handleCalculateShipping() {
+    if (items.length === 0) {
+      toast.error("Carrinho vazio. Adicione produtos antes de calcular o frete.")
+      return
+    }
+
+    if (!cepDestino.trim()) {
+      toast.error("Informe o CEP de entrega.")
+      return
+    }
+
+    const hasInvalidProduct = items.some((item) => !item.productId)
+
+    if (hasInvalidProduct) {
+      toast.error("Produto inválido no carrinho. Remova e adicione novamente.")
+      return
+    }
+
+    setCalculatingShipping(true)
+
+    try {
+      const response = await fetch("/api/shipping/calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cepDestino,
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: Math.max(1, item.quantity),
+          })),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Não foi possível calcular o frete.")
+      }
+
+      setShippingOptions(data.options ?? [])
+      setSelectedShipping(null)
+      toast.success("Frete calculado com sucesso.")
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível calcular o frete."
+      )
+    } finally {
+      setCalculatingShipping(false)
     }
   }
 
@@ -204,7 +275,25 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <input placeholder="CEP" className={inputClass} />
+                  <div className="flex flex-col gap-3 sm:flex-row md:col-span-2">
+                    <input
+                      value={cepDestino}
+                      onChange={(event) => setCepDestino(event.target.value)}
+                      placeholder="CEP"
+                      inputMode="numeric"
+                      className={`${inputClass} min-w-0 flex-1`}
+                    />
+
+                    <button
+                      type="button"
+                      disabled={calculatingShipping || items.length === 0}
+                      onClick={handleCalculateShipping}
+                      className="rounded-full border border-[#B89535]/50 px-5 py-3 text-sm font-semibold text-[#8A6800] transition hover:border-[#B89535] hover:bg-[#B89535] hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {calculatingShipping ? "Calculando..." : "Calcular frete"}
+                    </button>
+                  </div>
+
                   <input placeholder="Cidade" className={inputClass} />
                   <input
                     placeholder="Endereço"
@@ -213,6 +302,55 @@ export default function CheckoutPage() {
                   <input placeholder="Número" className={inputClass} />
                   <input placeholder="Complemento" className={inputClass} />
                 </div>
+
+                {shippingOptions.length > 0 && (
+                  <div className="mt-6 border-t border-[#E7E1D8] pt-6">
+                    <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                      Opções de frete
+                    </h3>
+                    <p className="mt-1 text-sm text-[#6F6A63]">
+                      Escolha uma opção para incluir no total do pedido.
+                    </p>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      {shippingOptions.map((option) => {
+                        const isSelected = selectedShipping?.id === option.id
+
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => setSelectedShipping(option)}
+                            className={`rounded-2xl border bg-white p-4 text-left transition ${
+                              isSelected
+                                ? "border-[#B89535] shadow-[0_12px_30px_rgba(184,149,53,0.12)]"
+                                : "border-[#E7E1D8] hover:border-[#B89535]/60"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="font-semibold text-[#1A1A1A]">
+                                  {option.name}
+                                </p>
+                                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#8A8A8A]">
+                                  {option.company}
+                                </p>
+                              </div>
+
+                              <span className="font-semibold text-[#B89535]">
+                                {formatCurrency(option.price)}
+                              </span>
+                            </div>
+
+                            <p className="mt-3 text-sm text-[#6F6A63]">
+                              Prazo estimado: {option.deliveryTime} dias úteis
+                            </p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </form>
           </section>
@@ -289,16 +427,16 @@ export default function CheckoutPage() {
             <div className="mt-8 space-y-4 border-t border-[#E7E1D8] pt-6">
               <div className="flex justify-between text-[#5C5C5C]">
                 <span>Subtotal</span>
-                <span>{formattedTotal}</span>
+                <span>{formattedSubtotal}</span>
               </div>
 
               <div className="flex justify-between text-[#5C5C5C]">
-                <span>Frete</span>
-                <span>Calculado depois</span>
+                <span>Frete selecionado</span>
+                <span>{formattedShipping}</span>
               </div>
 
               <div className="flex justify-between border-t border-[#E7E1D8] pt-5 text-xl font-semibold text-[#1A1A1A]">
-                <span>Total</span>
+                <span>Total final</span>
                 <span>{formattedTotal}</span>
               </div>
             </div>
