@@ -74,18 +74,18 @@ export default async function CategoryPage({
         <div className="mx-auto max-w-7xl">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-[#E7E1D8] bg-white px-5 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#D4AF37] hover:text-[#B28A22]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#E7E1D8] bg-white px-5 py-2.5 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
           >
             <ArrowLeft size={18} />
             Voltar para loja
           </Link>
 
-          <section className="mt-8 rounded-[32px] bg-white p-6 shadow-sm md:p-10">
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B28A22] md:text-sm">
+          <section className="mt-8 rounded-2xl border border-[#E7E1D8] bg-white p-6 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-9">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B89535] md:text-sm">
               CS STORE
             </span>
 
-            <h1 className="mt-4 text-4xl font-bold text-[#1A1A1A] md:text-6xl">
+            <h1 className="mt-4 text-4xl font-semibold text-[#1A1A1A] md:text-6xl">
               {categoryPage.title}
             </h1>
 
@@ -96,14 +96,14 @@ export default async function CategoryPage({
 
           <section className="mt-8">
             {filteredProducts.length > 0 ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-white/80 p-8 text-center">
-                <h2 className="text-2xl font-bold text-[#1A1A1A]">
+              <div className="rounded-2xl border border-dashed border-[#D8CBB9] bg-white/80 p-8 text-center">
+                <h2 className="text-2xl font-semibold text-[#1A1A1A]">
                   Nenhum produto encontrado.
                 </h2>
                 <p className="mt-3 text-sm text-[#6F6A63]">

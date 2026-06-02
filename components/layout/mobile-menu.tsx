@@ -25,7 +25,7 @@ export function MobileMenu() {
   const itemClass = (name: string) =>
     `relative flex flex-col items-center gap-1 text-xs transition duration-300 ${
       active === name
-        ? "scale-105 text-[#B28A22]"
+        ? "scale-105 text-[#B89535]"
         : "text-neutral-500"
     }`
 
@@ -40,7 +40,7 @@ export function MobileMenu() {
           <House size={21} />
           Home
           {active === "inicio" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#D4AF37]" />
+            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
           )}
         </a>
 
@@ -52,7 +52,7 @@ export function MobileMenu() {
           <Grid2X2 size={21} />
           Produtos
           {active === "produtos" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#D4AF37]" />
+            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
           )}
         </a>
 
@@ -73,7 +73,7 @@ export function MobileMenu() {
           Carrinho
 
           {active === "carrinho" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#D4AF37]" />
+            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
           )}
         </button>
 
@@ -85,7 +85,7 @@ export function MobileMenu() {
           <User size={21} />
           Conta
           {active === "conta" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#D4AF37]" />
+            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
           )}
         </a>
       </div>

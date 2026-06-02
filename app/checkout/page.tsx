@@ -7,6 +7,9 @@ import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
 import { normalizeProductImageSrc } from "@/utils/images"
 
+const inputClass =
+  "rounded-xl border border-[#E7E1D8] bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#B89535]"
+
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items)
 
@@ -21,31 +24,31 @@ export default function CheckoutPage() {
   )
 
   return (
-    <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-12">
+    <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
-            className="logo-font text-3xl font-bold text-[#B28A22] md:text-4xl"
+            className="logo-font text-3xl font-bold text-[#B89535] md:text-4xl"
           >
             CS Store
           </Link>
 
           <Link
             href="/"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-[#E7E1D8] bg-white px-5 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#D4AF37] hover:text-[#B28A22]"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-[#E7E1D8] bg-white px-5 py-2.5 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
           >
             <ArrowLeft size={18} />
             Voltar para loja
           </Link>
         </div>
 
-        <div className="mt-6 rounded-[28px] bg-white p-5 shadow-sm md:mt-8 md:rounded-[32px] md:p-8">
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
+        <div className="mt-7 rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-8">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B89535]">
             Checkout seguro
           </span>
 
-          <h1 className="mt-3 text-3xl font-bold text-[#1A1A1A] md:text-5xl">
+          <h1 className="mt-3 text-3xl font-semibold text-[#1A1A1A] md:text-5xl">
             Finalize sua compra
           </h1>
 
@@ -54,30 +57,30 @@ export default function CheckoutPage() {
             de pagamento.
           </p>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl bg-[#F8F6F2] p-4">
-              <Truck className="mb-3 text-[#B28A22]" />
+          <div className="mt-7 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl bg-[#F8F6F2] p-4">
+              <Truck className="mb-3 text-[#B89535]" />
               <p className="text-sm font-semibold">Entrega rápida</p>
             </div>
 
-            <div className="rounded-2xl bg-[#F8F6F2] p-4">
-              <ShieldCheck className="mb-3 text-[#B28A22]" />
+            <div className="rounded-xl bg-[#F8F6F2] p-4">
+              <ShieldCheck className="mb-3 text-[#B89535]" />
               <p className="text-sm font-semibold">Compra protegida</p>
             </div>
 
-            <div className="rounded-2xl bg-[#F8F6F2] p-4">
-              <Lock className="mb-3 text-[#B28A22]" />
+            <div className="rounded-xl bg-[#F8F6F2] p-4">
+              <Lock className="mb-3 text-[#B89535]" />
               <p className="text-sm font-semibold">Dados seguros</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
-          <section className="space-y-6">
-            <form className="space-y-6">
-              <div className="rounded-[28px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
+        <div className="mt-7 grid gap-7 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
+          <section>
+            <form className="space-y-7">
+              <div className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
                 <div className="border-b border-[#E7E1D8] pb-5">
-                  <h2 className="text-2xl font-bold text-[#1A1A1A]">
+                  <h2 className="text-2xl font-semibold text-[#1A1A1A]">
                     Dados pessoais
                   </h2>
                   <p className="mt-2 text-sm text-[#6F6A63]">
@@ -86,32 +89,16 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <input
-                    placeholder="Nome completo"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
-
-                  <input
-                    placeholder="E-mail"
-                    type="email"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
-
-                  <input
-                    placeholder="Telefone"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
-
-                  <input
-                    placeholder="CPF"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
+                  <input placeholder="Nome completo" className={inputClass} />
+                  <input placeholder="E-mail" type="email" className={inputClass} />
+                  <input placeholder="Telefone" className={inputClass} />
+                  <input placeholder="CPF" className={inputClass} />
                 </div>
               </div>
 
-              <div className="rounded-[28px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
+              <div className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
                 <div className="border-b border-[#E7E1D8] pb-5">
-                  <h2 className="text-2xl font-bold text-[#1A1A1A]">
+                  <h2 className="text-2xl font-semibold text-[#1A1A1A]">
                     Endereço de entrega
                   </h2>
                   <p className="mt-2 text-sm text-[#6F6A63]">
@@ -120,39 +107,23 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <input
-                    placeholder="CEP"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
-
-                  <input
-                    placeholder="Cidade"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
-
+                  <input placeholder="CEP" className={inputClass} />
+                  <input placeholder="Cidade" className={inputClass} />
                   <input
                     placeholder="Endereço"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37] md:col-span-2"
+                    className={`${inputClass} md:col-span-2`}
                   />
-
-                  <input
-                    placeholder="Número"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
-
-                  <input
-                    placeholder="Complemento"
-                    className="rounded-2xl border border-[#E7E1D8] px-4 py-4 outline-none transition focus:border-[#D4AF37]"
-                  />
+                  <input placeholder="Número" className={inputClass} />
+                  <input placeholder="Complemento" className={inputClass} />
                 </div>
               </div>
             </form>
           </section>
 
-          <aside className="h-fit rounded-[28px] bg-white p-5 shadow-sm lg:sticky lg:top-28 md:rounded-[32px] md:p-8">
+          <aside className="h-fit rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] lg:sticky lg:top-28 md:p-7">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#1A1A1A]">
+                <h2 className="text-2xl font-semibold text-[#1A1A1A]">
                   Resumo do pedido
                 </h2>
                 <p className="mt-1 text-sm text-[#6F6A63]">
@@ -160,7 +131,7 @@ export default function CheckoutPage() {
                 </p>
               </div>
 
-              <span className="shrink-0 rounded-full bg-[#D4AF37]/15 px-4 py-2 text-sm font-semibold text-[#B28A22]">
+              <span className="shrink-0 rounded-full bg-[#B89535]/15 px-4 py-2 text-sm font-semibold text-[#8A6800]">
                 {cartCount} itens
               </span>
             </div>
@@ -173,14 +144,14 @@ export default function CheckoutPage() {
                 return (
                   <div
                     key={item.id}
-                    className="flex gap-4 rounded-3xl border border-[#E7E1D8] p-3 md:p-4"
+                    className="flex gap-4 rounded-2xl border border-[#E7E1D8] p-3"
                   >
                     <Image
                       src={normalizeProductImageSrc(item.image)}
                       alt={item.title}
-                      width={96}
-                      height={96}
-                      className="h-20 w-20 shrink-0 rounded-2xl object-cover md:h-24 md:w-24"
+                      width={88}
+                      height={88}
+                      className="h-20 w-20 shrink-0 rounded-xl object-cover md:h-[88px] md:w-[88px]"
                     />
 
                     <div className="flex min-w-0 flex-1 flex-col">
@@ -192,7 +163,7 @@ export default function CheckoutPage() {
                         Quantidade: {quantity}
                       </p>
 
-                      <p className="mt-auto font-bold text-[#B28A22]">
+                      <p className="mt-auto font-semibold text-[#B89535]">
                         {formatCurrency(itemTotal)}
                       </p>
                     </div>
@@ -201,7 +172,7 @@ export default function CheckoutPage() {
               })}
 
               {items.length === 0 && (
-                <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-6 text-center">
+                <div className="rounded-2xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-6 text-center">
                   <p className="font-semibold text-[#1A1A1A]">
                     Seu carrinho está vazio.
                   </p>
@@ -210,7 +181,7 @@ export default function CheckoutPage() {
                   </p>
                   <Link
                     href="/"
-                    className="mt-5 inline-flex rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#C89B2C]"
+                    className="mt-5 inline-flex rounded-full bg-[#B89535] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#A7832E]"
                   >
                     Escolher produtos
                   </Link>
@@ -229,7 +200,7 @@ export default function CheckoutPage() {
                 <span>Calculado depois</span>
               </div>
 
-              <div className="flex justify-between border-t border-[#E7E1D8] pt-5 text-xl font-bold text-[#1A1A1A]">
+              <div className="flex justify-between border-t border-[#E7E1D8] pt-5 text-xl font-semibold text-[#1A1A1A]">
                 <span>Total</span>
                 <span>{formattedTotal}</span>
               </div>
@@ -237,7 +208,7 @@ export default function CheckoutPage() {
 
             <button
               disabled={items.length === 0}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#B89535] py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
               <CreditCard size={20} />

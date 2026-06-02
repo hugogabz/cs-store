@@ -48,7 +48,7 @@ export function HeroSection() {
         transition={{ duration: 0.7 }}
         className="relative z-10 max-w-3xl text-center md:text-left"
       >
-        <span className="mb-6 inline-block rounded-full border border-[#D4AF37]/30 bg-white/75 px-5 py-2 text-sm font-medium text-[#8A6800] backdrop-blur">
+        <span className="mb-6 inline-block rounded-full border border-[#B89535]/30 bg-white/75 px-5 py-2 text-sm font-medium text-[#8A6800] backdrop-blur">
           Beauty Luxury Experience
         </span>
 
@@ -64,14 +64,14 @@ export function HeroSection() {
         <div className="flex flex-col gap-4 md:flex-row">
           <a
             href="#destaques"
-            className="rounded-full bg-[#D4AF37] px-8 py-4 font-semibold text-black transition hover:bg-[#C89B2C]"
+            className="rounded-full bg-[#B89535] px-8 py-4 font-semibold text-black transition hover:bg-[#A7832E]"
           >
             Explorar produtos
           </a>
 
           <a
             href="#cabelos"
-            className="rounded-full border border-[#D4AF37]/50 bg-white/70 px-8 py-4 font-semibold text-[#1A1A1A] backdrop-blur transition hover:border-[#D4AF37] hover:text-[#8A6800]"
+            className="rounded-full border border-[#B89535]/50 bg-white/70 px-8 py-4 font-semibold text-[#1A1A1A] backdrop-blur transition hover:border-[#B89535] hover:text-[#8A6800]"
           >
             Ver coleções
           </a>

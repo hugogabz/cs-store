@@ -35,29 +35,29 @@ export function CategorySection({
 
     if (!carousel) return
 
-    const cardWidth = carousel.clientWidth < 768
+    const scrollAmount = carousel.clientWidth < 768
       ? carousel.clientWidth * 0.82
-      : 360
+      : carousel.clientWidth / 2
 
     carousel.scrollBy({
       behavior: "smooth",
-      left: direction === "left" ? -cardWidth : cardWidth,
+      left: direction === "left" ? -scrollAmount : scrollAmount,
     })
   }
 
   return (
     <section
       id={id}
-      className="scroll-mt-24 bg-[#F8F6F2] px-4 py-14 md:px-8 md:py-20"
+      className="scroll-mt-24 bg-[#F8F6F2] px-4 py-12 md:px-8 md:py-16"
     >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-5 md:mb-10 md:flex-row md:items-end md:justify-between">
+        <div className="mb-7 flex flex-col gap-5 md:mb-9 md:flex-row md:items-end md:justify-between">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B28A22] md:text-sm">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B89535] md:text-sm">
               CS STORE
             </span>
 
-            <h2 className="mt-4 text-3xl font-bold text-[#1A1A1A] md:text-5xl">
+            <h2 className="mt-3 text-3xl font-semibold text-[#1A1A1A] md:text-5xl">
               {title}
             </h2>
 
@@ -68,7 +68,7 @@ export function CategorySection({
 
           <Link
             href={seeMoreHref}
-            className="inline-flex w-fit items-center rounded-full border border-[#D4AF37]/50 bg-white px-5 py-3 text-sm font-semibold text-[#8A6800] transition hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+            className="inline-flex w-fit items-center rounded-full border border-[#B89535]/50 bg-white px-5 py-2.5 text-sm font-semibold text-[#8A6800] transition hover:border-[#B89535] hover:bg-[#B89535] hover:text-black"
           >
             Ver mais
           </Link>
@@ -77,25 +77,25 @@ export function CategorySection({
         <div className="relative">
           {products.length > 0 && (
             <>
-              <div className="pointer-events-none absolute left-0 top-0 z-10 hidden h-full w-16 bg-gradient-to-r from-[#F8F6F2] to-transparent md:block" />
-              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-[#F8F6F2] to-transparent" />
+              <div className="pointer-events-none absolute left-0 top-0 z-10 hidden h-full w-12 bg-gradient-to-r from-[#F8F6F2] to-transparent md:block" />
+              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#F8F6F2] to-transparent" />
 
               <button
                 type="button"
                 onClick={() => scrollCarousel("left")}
-                className="absolute -left-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E7E1D8] bg-white text-[#1A1A1A] shadow-sm transition hover:border-[#D4AF37] hover:text-[#B28A22] md:flex"
+                className="absolute -left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#E7E1D8] bg-white/95 text-[#1A1A1A] shadow-[0_10px_26px_rgba(26,26,26,0.08)] transition hover:border-[#B89535] hover:text-[#B89535] md:flex"
                 aria-label={`Ver produtos anteriores em ${title}`}
               >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={21} />
               </button>
 
               <button
                 type="button"
                 onClick={() => scrollCarousel("right")}
-                className="absolute -right-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E7E1D8] bg-white text-[#1A1A1A] shadow-sm transition hover:border-[#D4AF37] hover:text-[#B28A22] md:flex"
+                className="absolute -right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#E7E1D8] bg-white/95 text-[#1A1A1A] shadow-[0_10px_26px_rgba(26,26,26,0.08)] transition hover:border-[#B89535] hover:text-[#B89535] md:flex"
                 aria-label={`Ver próximos produtos em ${title}`}
               >
-                <ChevronRight size={22} />
+                <ChevronRight size={21} />
               </button>
             </>
           )}
@@ -103,19 +103,19 @@ export function CategorySection({
           {products.length > 0 ? (
             <div
               ref={carouselRef}
-              className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-4 pr-8 scrollbar-hide md:gap-6 md:px-2"
+              className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-4 pr-8 scrollbar-hide md:gap-5 md:px-2"
             >
               {products.map((product) => (
                 <div
                   key={product.id ?? product.title}
-                  className="min-w-[78%] snap-start sm:min-w-[48%] md:min-w-[340px] lg:min-w-[360px]"
+                  className="min-w-[78%] snap-start sm:min-w-[48%] md:min-w-[calc((100%_-_60px)/4)]"
                 >
                   <ProductCard {...product} />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-white/70 p-8 text-sm text-[#6F6A63]">
+            <div className="rounded-2xl border border-dashed border-[#D8CBB9] bg-white/70 p-8 text-sm text-[#6F6A63]">
               Nenhum produto cadastrado nesta seção ainda.
             </div>
           )}

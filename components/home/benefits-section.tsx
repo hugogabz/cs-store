@@ -33,9 +33,9 @@ export function BenefitsSection() {
           return (
             <div
               key={benefit.title}
-              className="rounded-3xl border border-[#E7E1D8] bg-[#F8F6F2] p-6 transition hover:shadow-md"
+              className="rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-6 transition hover:shadow-[0_12px_30px_rgba(26,26,26,0.05)]"
             >
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#D4AF37]/15 text-[#B28A22]">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#B89535]/15 text-[#B89535]">
                 <Icon size={24} />
               </div>
 

@@ -18,21 +18,21 @@ export function Header() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-8">
           <a
             href="#inicio"
-            className="logo-font text-3xl font-bold text-[#B28A22] transition hover:text-[#D4AF37] md:text-4xl"
+            className="logo-font text-3xl font-bold text-[#B89535] transition hover:text-[#A7832E] md:text-4xl"
           >
             CS Store
           </a>
 
           <nav className="hidden gap-10 text-sm font-medium md:flex">
-            <a href="#cabelos" className="transition hover:text-[#D4AF37]">
+            <a href="#cabelos" className="transition hover:text-[#B89535]">
               Cabelos
             </a>
 
-            <a href="#cosmeticos" className="transition hover:text-[#D4AF37]">
+            <a href="#cosmeticos" className="transition hover:text-[#B89535]">
               Cosméticos
             </a>
 
-            <a href="#acessorios" className="transition hover:text-[#D4AF37]">
+            <a href="#acessorios" className="transition hover:text-[#B89535]">
               Acessórios
             </a>
           </nav>
@@ -40,14 +40,14 @@ export function Header() {
           <div className="hidden items-center gap-4 md:flex">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]"
+              className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B89535]"
               aria-label="Buscar produtos"
             >
               <Search size={20} />
             </button>
 
             <button
-              className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B28A22]"
+              className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B89535]"
               aria-label="Área do cliente"
             >
               <User size={20} />
@@ -55,7 +55,7 @@ export function Header() {
 
             <button
               onClick={openCart}
-              className="relative rounded-full bg-[#D4AF37] p-3 text-black transition hover:bg-[#C89B2C]"
+              className="relative rounded-full bg-[#B89535] p-3 text-black transition hover:bg-[#A7832E]"
               aria-label="Abrir carrinho"
             >
               <ShoppingBag size={20} />

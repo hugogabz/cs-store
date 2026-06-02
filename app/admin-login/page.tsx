@@ -36,8 +36,8 @@ export default function AdminLoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F8F6F2] px-4">
-      <div className="w-full max-w-md rounded-[32px] bg-white p-8 shadow-xl">
-        <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
+      <div className="w-full max-w-md rounded-2xl border border-[#E7E1D8] bg-white p-8 shadow-[0_12px_34px_rgba(26,26,26,0.05)]">
+        <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
           CS Store
         </span>
 
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+              className="w-full rounded-xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#B89535]"
               placeholder="Digite a senha"
             />
           </div>
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
 
           <button
             disabled={loading}
-            className="w-full rounded-full bg-[#D4AF37] py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:opacity-60"
+            className="w-full rounded-full bg-[#B89535] py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:opacity-60"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>

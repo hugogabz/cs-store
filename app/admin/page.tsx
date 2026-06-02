@@ -25,6 +25,8 @@ type UploadResponse = {
 }
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+const inputClass =
+  "w-full rounded-xl border border-[#E7E1D8] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#B89535]"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -293,13 +295,13 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-10">
-      <div className="mx-auto max-w-6xl space-y-6 md:space-y-8">
+      <div className="mx-auto max-w-6xl space-y-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
               CS Store
             </span>
-            <h1 className="mt-2 text-3xl font-bold text-[#1A1A1A] md:text-4xl">
+            <h1 className="mt-2 text-3xl font-semibold text-[#1A1A1A] md:text-4xl">
               Painel administrativo
             </h1>
           </div>
@@ -313,19 +315,19 @@ export default function AdminPage() {
               toast.success("Sessão encerrada.")
               router.push("/admin-login")
             }}
-            className="w-full rounded-full border border-[#E7E1D8] bg-white px-5 py-3 text-sm font-semibold transition hover:border-red-300 hover:text-red-500 sm:w-auto"
+            className="w-full rounded-full border border-[#E7E1D8] bg-white px-5 py-2.5 text-sm font-semibold transition hover:border-red-300 hover:text-red-500 sm:w-auto"
           >
             Sair
           </button>
         </div>
 
-        <section className="rounded-[28px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
-          <div className="mb-6 md:mb-8">
-            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
+        <section className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
+          <div className="mb-7">
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
               Produtos
             </span>
 
-            <h2 className="mt-3 text-3xl font-bold text-[#1A1A1A]">
+            <h2 className="mt-3 text-3xl font-semibold text-[#1A1A1A]">
               {editingProductId ? "Editar produto" : "Cadastrar produto"}
             </h2>
 
@@ -335,7 +337,7 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-[1fr_280px]">
+          <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_280px]">
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium">
@@ -346,7 +348,7 @@ export default function AdminPage() {
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   required
-                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                   placeholder="Ex: Óleo Capilar Premium"
                 />
               </div>
@@ -359,7 +361,7 @@ export default function AdminPage() {
                 <select
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
-                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                 >
                   <option value="Cabelos">Cabelos</option>
                   <option value="Cosméticos">Cosméticos</option>
@@ -379,7 +381,7 @@ export default function AdminPage() {
                   type="number"
                   step="0.01"
                   min="0"
-                  className="w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+                  className={inputClass}
                   placeholder="Ex: 129.90"
                 />
               </div>
@@ -389,7 +391,7 @@ export default function AdminPage() {
                   Imagem do produto
                 </label>
 
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#D4AF37] hover:text-[#B28A22]">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#E7E1D8] bg-[#F8F6F2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]">
                   <Upload size={18} />
                   {uploadingImage ? "Enviando imagem..." : "Selecionar imagem"}
                   <input
@@ -415,7 +417,7 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-[#E7E1D8] p-4 md:col-span-2">
+              <label className="flex items-center gap-3 rounded-xl border border-[#E7E1D8] p-4 md:col-span-2">
                 <input
                   type="checkbox"
                   checked={featured}
@@ -428,7 +430,7 @@ export default function AdminPage() {
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row">
                 <button
                   disabled={loading || uploadingImage}
-                  className="rounded-full bg-[#D4AF37] px-6 py-4 font-semibold text-black transition hover:bg-[#C89B2C] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-[#B89535] px-6 py-3 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading
                     ? "Salvando..."
@@ -441,7 +443,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="rounded-full border border-[#E7E1D8] px-6 py-4 font-semibold text-[#1A1A1A] transition hover:border-[#D4AF37] hover:text-[#B28A22]"
+                    className="rounded-full border border-[#E7E1D8] px-6 py-3 font-semibold text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
                   >
                     Cancelar edição
                   </button>
@@ -449,20 +451,20 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-4">
+            <div className="rounded-2xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-4">
               <p className="mb-3 text-sm font-semibold text-[#1A1A1A]">
                 Preview da imagem
               </p>
 
               {imagePreviewSrc ? (
                 <div
-                  className="aspect-square w-full rounded-2xl bg-cover bg-center"
+                  className="aspect-square w-full rounded-xl bg-cover bg-center"
                   style={{
                     backgroundImage: `url("${imagePreviewSrc}")`,
                   }}
                 />
               ) : (
-                <div className="flex aspect-square items-center justify-center rounded-2xl bg-white px-4 text-center text-sm text-[#6F6A63]">
+                <div className="flex aspect-square items-center justify-center rounded-xl bg-white px-4 text-center text-sm text-[#6F6A63]">
                   Selecione uma imagem para enviar ao Cloudinary.
                 </div>
               )}
@@ -475,13 +477,13 @@ export default function AdminPage() {
           </form>
         </section>
 
-        <section className="rounded-[28px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
+        <section className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
           <div className="mb-6">
-            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B28A22]">
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
               Catálogo
             </span>
 
-            <h2 className="mt-3 text-3xl font-bold text-[#1A1A1A]">
+            <h2 className="mt-3 text-3xl font-semibold text-[#1A1A1A]">
               Produtos cadastrados
             </h2>
 
@@ -489,7 +491,7 @@ export default function AdminPage() {
               value={adminSearch}
               onChange={(event) => setAdminSearch(event.target.value)}
               placeholder="Pesquisar por nome, categoria ou preço..."
-              className="mt-6 w-full rounded-2xl border border-[#E7E1D8] px-4 py-3 outline-none focus:border-[#D4AF37]"
+              className={`${inputClass} mt-6`}
             />
           </div>
 
@@ -497,15 +499,15 @@ export default function AdminPage() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="flex flex-col gap-4 rounded-3xl border border-[#E7E1D8] p-4 md:flex-row md:items-center md:justify-between"
+                className="flex flex-col gap-4 rounded-2xl border border-[#E7E1D8] p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="flex min-w-0 gap-4">
                   <Image
                     src={normalizeProductImageSrc(product.image)}
                     alt={product.title}
-                    width={80}
-                    height={80}
-                    className="h-20 w-20 shrink-0 rounded-2xl object-cover"
+                    width={76}
+                    height={76}
+                    className="h-[76px] w-[76px] shrink-0 rounded-xl object-cover"
                   />
 
                   <div className="min-w-0">
@@ -522,7 +524,7 @@ export default function AdminPage() {
                     </p>
 
                     {product.featured && (
-                      <span className="mt-2 inline-block rounded-full bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#B28A22]">
+                      <span className="mt-2 inline-block rounded-full bg-[#B89535]/15 px-3 py-1 text-xs font-semibold text-[#8A6800]">
                         Destaque
                       </span>
                     )}
@@ -532,7 +534,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-2 gap-3 md:flex md:shrink-0">
                   <button
                     onClick={() => handleEdit(product)}
-                    className="rounded-full border border-[#E7E1D8] px-4 py-2 text-sm transition hover:border-[#D4AF37] hover:text-[#B28A22]"
+                    className="rounded-full border border-[#E7E1D8] px-4 py-2 text-sm transition hover:border-[#B89535] hover:text-[#B89535]"
                   >
                     Editar
                   </button>
@@ -548,7 +550,7 @@ export default function AdminPage() {
             ))}
 
             {filteredProducts.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-6 text-center text-[#5C5C5C]">
+              <div className="rounded-2xl border border-dashed border-[#D8CBB9] bg-[#F8F6F2] p-6 text-center text-[#5C5C5C]">
                 Nenhum produto encontrado.
               </div>
             )}
