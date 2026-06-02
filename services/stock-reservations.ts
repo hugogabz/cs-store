@@ -16,6 +16,18 @@ export async function releaseExpiredStockReservations(now = new Date()) {
   return result.count
 }
 
+export async function releaseStockReservationGroup(groupId: string) {
+  const prisma = getPrisma()
+
+  const result = await prisma.stockReservation.deleteMany({
+    where: {
+      groupId,
+    },
+  })
+
+  return result.count
+}
+
 export async function getActiveReservedQuantity(productId: string, now = new Date()) {
   const prisma = getPrisma()
 

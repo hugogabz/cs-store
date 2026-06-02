@@ -2,8 +2,15 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, CreditCard, Lock, ShieldCheck, Truck } from "lucide-react"
-import { useEffect, useState } from "react"
+import {
+  ArrowLeft,
+  CreditCard,
+  Lock,
+  ShieldCheck,
+  Trash2,
+  Truck,
+} from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useCartStore } from "@/store/cart-store"
 import { formatCurrency, toNumberPrice } from "@/utils/currency"
@@ -12,9 +19,16 @@ import { normalizeProductImageSrc } from "@/utils/images"
 const inputClass =
   "rounded-xl border border-[#E7E1D8] bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#B89535]"
 
+const CHECKOUT_STORAGE_KEY = "cs-store-checkout-reservation"
+
 type ReservationState = {
   reservationId: string
   expiresAt: string
+}
+
+type ReservationItem = {
+  productId: string
+  quantity: number
 }
 
 type ShippingOption = {
@@ -25,6 +39,15 @@ type ShippingOption = {
   deliveryTime: number
 }
 
+type PersistedCheckoutState = {
+  reservation: ReservationState
+  reservationItems: ReservationItem[]
+  cartSignature: string
+  cepDestino: string
+  shippingOptions: ShippingOption[]
+  selectedShipping: ShippingOption | null
+}
+
 function formatReservationTime(seconds: number) {
   const safeSeconds = Math.max(0, seconds)
   const minutes = Math.floor(safeSeconds / 60)
@@ -33,15 +56,93 @@ function formatReservationTime(seconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
 }
 
+function getCartSignature(
+  items: Array<{ productId?: string | null; title: string; quantity: number }>
+) {
+  if (items.length === 0) return "empty"
+
+  return items
+    .map((item) => ({
+      id: item.productId ?? item.title,
+      quantity: Math.max(1, item.quantity),
+    }))
+    .sort((firstItem, secondItem) => firstItem.id.localeCompare(secondItem.id))
+    .map((item) => `${item.id}:${item.quantity}`)
+    .join("|")
+}
+
+function getReservationItems(
+  items: Array<{ productId?: string | null; quantity: number }>
+) {
+  return items
+    .filter((item): item is { productId: string; quantity: number } =>
+      Boolean(item.productId)
+    )
+    .map((item) => ({
+      productId: item.productId,
+      quantity: Math.max(1, item.quantity),
+    }))
+}
+
+function isReservationActive(reservation: ReservationState) {
+  return new Date(reservation.expiresAt).getTime() > Date.now()
+}
+
+function readPersistedCheckoutState() {
+  if (typeof window === "undefined") return null
+
+  try {
+    const rawState = window.localStorage.getItem(CHECKOUT_STORAGE_KEY)
+
+    if (!rawState) return null
+
+    return JSON.parse(rawState) as PersistedCheckoutState
+  } catch {
+    return null
+  }
+}
+
+function writePersistedCheckoutState(state: PersistedCheckoutState) {
+  window.localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(state))
+}
+
+function clearPersistedCheckoutState() {
+  window.localStorage.removeItem(CHECKOUT_STORAGE_KEY)
+}
+
+function hasCartStoreHydrated() {
+  if (typeof window === "undefined") return true
+
+  return useCartStore.persist?.hasHydrated() ?? true
+}
+
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items)
+  const removeItem = useCartStore((state) => state.removeItem)
   const [reservation, setReservation] = useState<ReservationState | null>(null)
+  const [reservationItems, setReservationItems] = useState<ReservationItem[]>([])
+  const [reservedCartSignature, setReservedCartSignature] = useState("")
   const [secondsRemaining, setSecondsRemaining] = useState(0)
   const [reserving, setReserving] = useState(false)
+  const [creatingOrder, setCreatingOrder] = useState(false)
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
+  const [customerName, setCustomerName] = useState("")
+  const [customerEmail, setCustomerEmail] = useState("")
+  const [customerPhone, setCustomerPhone] = useState("")
+  const [customerCpf, setCustomerCpf] = useState("")
   const [cepDestino, setCepDestino] = useState("")
+  const [city, setCity] = useState("")
+  const [address, setAddress] = useState("")
+  const [state, setState] = useState("")
   const [calculatingShipping, setCalculatingShipping] = useState(false)
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
-  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null)
+  const [selectedShipping, setSelectedShipping] =
+    useState<ShippingOption | null>(null)
+  const [reservationNotice, setReservationNotice] = useState(
+    "Clique em Ir para pagamento para reservar seus produtos por 15 minutos."
+  )
+  const [cartHydrated, setCartHydrated] = useState(hasCartStoreHydrated)
+  const invalidatingReservationRef = useRef(false)
 
   const subtotal = items.reduce((acc, item) => {
     return acc + toNumberPrice(item.price) * Math.max(1, item.quantity)
@@ -59,6 +160,98 @@ export default function CheckoutPage() {
     0
   )
   const hasActiveReservation = Boolean(reservation && secondsRemaining > 0)
+  const cartSignature = getCartSignature(items)
+
+  const releaseReservation = useCallback(async (reservationId: string) => {
+    await fetch("/api/stock/reserve", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reservationId,
+      }),
+    }).catch(() => null)
+  }, [])
+
+  const invalidateReservation = useCallback(async (
+    message: string,
+    showToast = true
+  ) => {
+    if (invalidatingReservationRef.current) return
+
+    invalidatingReservationRef.current = true
+
+    const currentReservationId = reservation?.reservationId
+
+    setReservation(null)
+    setReservationItems([])
+    setReservedCartSignature("")
+    setSecondsRemaining(0)
+    setShippingOptions([])
+    setSelectedShipping(null)
+    setCreatedOrderId(null)
+    setReservationNotice(message)
+    clearPersistedCheckoutState()
+
+    if (currentReservationId) {
+      await releaseReservation(currentReservationId)
+    }
+
+    if (showToast) {
+      toast.info(message)
+    }
+
+    invalidatingReservationRef.current = false
+  }, [releaseReservation, reservation?.reservationId])
+
+  useEffect(() => {
+    const persistApi = useCartStore.persist
+
+    if (!persistApi) {
+      queueMicrotask(() => setCartHydrated(true))
+      return
+    }
+
+    const unsubscribe = persistApi.onFinishHydration(() => {
+      setCartHydrated(true)
+    })
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/stock/release-expired", {
+      method: "POST",
+    }).catch(() => null)
+
+    const persistedState = readPersistedCheckoutState()
+
+    if (!persistedState) return
+
+    if (!isReservationActive(persistedState.reservation)) {
+      clearPersistedCheckoutState()
+      queueMicrotask(() => {
+        setReservationNotice(
+          "Sua reserva expirou. Confirme o estoque novamente para continuar."
+        )
+        toast.warning(
+          "Sua reserva expirou. Confirme o estoque novamente para continuar."
+        )
+      })
+      return
+    }
+
+    queueMicrotask(() => {
+      setReservation(persistedState.reservation)
+      setReservationItems(persistedState.reservationItems ?? [])
+      setReservedCartSignature(persistedState.cartSignature)
+      setCepDestino(persistedState.cepDestino ?? "")
+      setShippingOptions(persistedState.shippingOptions ?? [])
+      setSelectedShipping(persistedState.selectedShipping ?? null)
+      setReservationNotice("Seus produtos ainda estão reservados.")
+    })
+  }, [])
 
   useEffect(() => {
     if (!reservation) return
@@ -70,6 +263,18 @@ export default function CheckoutPage() {
       const seconds = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
 
       setSecondsRemaining(seconds)
+
+      if (seconds === 0) {
+        setReservation(null)
+        setReservationItems([])
+        setReservedCartSignature("")
+        setShippingOptions([])
+        setSelectedShipping(null)
+        setReservationNotice(
+          "Sua reserva expirou. Reserve novamente para continuar."
+        )
+        clearPersistedCheckoutState()
+      }
     }
 
     updateCountdown()
@@ -78,22 +283,60 @@ export default function CheckoutPage() {
     return () => window.clearInterval(interval)
   }, [reservation])
 
+  useEffect(() => {
+    if (!reservation || !hasActiveReservation || !reservedCartSignature) return
+    if (!cartHydrated) return
+    if (cartSignature === reservedCartSignature) return
+
+    void invalidateReservation(
+      "Seu carrinho mudou. Reserve novamente antes de pagar."
+    )
+  }, [
+    cartHydrated,
+    cartSignature,
+    hasActiveReservation,
+    invalidateReservation,
+    reservation,
+    reservedCartSignature,
+  ])
+
+  useEffect(() => {
+    if (!reservation || !hasActiveReservation || !reservedCartSignature) return
+
+    writePersistedCheckoutState({
+      reservation,
+      reservationItems,
+      cartSignature: reservedCartSignature,
+      cepDestino,
+      shippingOptions,
+      selectedShipping,
+    })
+  }, [
+    cepDestino,
+    hasActiveReservation,
+    reservation,
+    reservationItems,
+    reservedCartSignature,
+    selectedShipping,
+    shippingOptions,
+  ])
+
   async function handleReserveStock() {
     if (items.length === 0) {
       toast.error("Carrinho vazio. Adicione produtos antes de reservar.")
-      return
+      return null
     }
 
-    if (hasActiveReservation) {
+    if (hasActiveReservation && cartSignature === reservedCartSignature) {
       toast.info("Os produtos já estão reservados.")
-      return
+      return reservation
     }
 
     const hasInvalidProduct = items.some((item) => !item.productId)
 
     if (hasInvalidProduct) {
       toast.error("Produto inválido no carrinho. Remova e adicione novamente.")
-      return
+      return null
     }
 
     setReserving(true)
@@ -119,20 +362,122 @@ export default function CheckoutPage() {
         throw new Error(data?.message ?? "Não foi possível reservar o estoque.")
       }
 
-      setReservation({
+      const nextReservation = {
         reservationId: data.reservationId,
         expiresAt: data.expiresAt,
+      }
+      const nextReservationItems = getReservationItems(items)
+      const nextCartSignature = getCartSignature(items)
+
+      setReservation(nextReservation)
+      setReservationItems(nextReservationItems)
+      setReservedCartSignature(nextCartSignature)
+      setReservationNotice(
+        "Seus produtos estão reservados até o fim do contador."
+      )
+
+      writePersistedCheckoutState({
+        reservation: nextReservation,
+        reservationItems: nextReservationItems,
+        cartSignature: nextCartSignature,
+        cepDestino,
+        shippingOptions,
+        selectedShipping,
       })
 
       toast.success("Seus produtos estão reservados por 15 minutos.")
+      return nextReservation
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível reservar o estoque."
       )
+      return null
     } finally {
       setReserving(false)
+    }
+  }
+
+  async function ensureActiveReservation() {
+    if (hasActiveReservation && cartSignature === reservedCartSignature) {
+      return true
+    }
+
+    const nextReservation = await handleReserveStock()
+    return Boolean(nextReservation)
+  }
+
+  async function handleCreatePendingOrder() {
+    if (items.length === 0) {
+      toast.error("Carrinho vazio. Adicione produtos antes de continuar.")
+      return
+    }
+
+    if (!selectedShipping) {
+      toast.error("Calcule e selecione uma opção de frete antes de continuar.")
+      return
+    }
+
+    if (!customerName || !customerEmail || !customerPhone || !cepDestino || !address) {
+      toast.error("Preencha nome, e-mail, telefone, CEP e endereço.")
+      return
+    }
+
+    if (!hasActiveReservation || cartSignature !== reservedCartSignature) {
+      const reservedNow = await ensureActiveReservation()
+
+      if (!reservedNow) {
+        return
+      }
+    }
+
+    setCreatingOrder(true)
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerName,
+          customerEmail,
+          customerPhone,
+          customerCpf,
+          cep: cepDestino,
+          address,
+          city,
+          state,
+          shippingMethod: `${selectedShipping.name} — ${selectedShipping.company}`,
+          shippingPrice: selectedShipping.price,
+          items: items.map((item) => ({
+            productId: item.productId,
+            title: item.title,
+            image: item.image,
+            price: toNumberPrice(item.price),
+            quantity: Math.max(1, item.quantity),
+          })),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Não foi possível criar o pedido.")
+      }
+
+      setCreatedOrderId(data.orderId)
+      setReservationNotice("Pedido criado. Próxima etapa: pagamento.")
+      toast.success("Pedido criado. Próxima etapa: pagamento.")
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível criar o pedido."
+      )
+    } finally {
+      setCreatingOrder(false)
     }
   }
 
@@ -189,6 +534,27 @@ export default function CheckoutPage() {
     } finally {
       setCalculatingShipping(false)
     }
+  }
+
+  async function handleRemoveCheckoutItem(itemId: number) {
+    removeItem(itemId)
+    setShippingOptions([])
+    setSelectedShipping(null)
+
+    if (hasActiveReservation) {
+      await invalidateReservation(
+        "Produto removido. Recalcule o frete e reserve novamente para continuar."
+      )
+      return
+    }
+
+    setReservationNotice(
+      "Seu carrinho mudou. Recalcule o frete e reserve novamente para continuar."
+    )
+    clearPersistedCheckoutState()
+    toast.info(
+      "Produto removido. Recalcule o frete e reserve novamente para continuar."
+    )
   }
 
   return (
@@ -257,10 +623,31 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <input placeholder="Nome completo" className={inputClass} />
-                  <input placeholder="E-mail" type="email" className={inputClass} />
-                  <input placeholder="Telefone" className={inputClass} />
-                  <input placeholder="CPF" className={inputClass} />
+                  <input
+                    value={customerName}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                    placeholder="Nome completo"
+                    className={inputClass}
+                  />
+                  <input
+                    value={customerEmail}
+                    onChange={(event) => setCustomerEmail(event.target.value)}
+                    placeholder="E-mail"
+                    type="email"
+                    className={inputClass}
+                  />
+                  <input
+                    value={customerPhone}
+                    onChange={(event) => setCustomerPhone(event.target.value)}
+                    placeholder="Telefone"
+                    className={inputClass}
+                  />
+                  <input
+                    value={customerCpf}
+                    onChange={(event) => setCustomerCpf(event.target.value)}
+                    placeholder="CPF"
+                    className={inputClass}
+                  />
                 </div>
               </div>
 
@@ -294,8 +681,21 @@ export default function CheckoutPage() {
                     </button>
                   </div>
 
-                  <input placeholder="Cidade" className={inputClass} />
                   <input
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                    placeholder="Cidade"
+                    className={inputClass}
+                  />
+                  <input
+                    value={state}
+                    onChange={(event) => setState(event.target.value)}
+                    placeholder="Estado"
+                    className={inputClass}
+                  />
+                  <input
+                    value={address}
+                    onChange={(event) => setAddress(event.target.value)}
                     placeholder="Endereço"
                     className={`${inputClass} md:col-span-2`}
                   />
@@ -387,9 +787,20 @@ export default function CheckoutPage() {
                     />
 
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <h3 className="line-clamp-2 font-semibold leading-tight text-[#1A1A1A]">
-                        {item.title}
-                      </h3>
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="line-clamp-2 font-semibold leading-tight text-[#1A1A1A]">
+                          {item.title}
+                        </h3>
+
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveCheckoutItem(item.id)}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#E7E1D8] px-3 py-1.5 text-xs font-semibold text-[#6F6A63] transition hover:border-red-200 hover:text-red-500"
+                        >
+                          <Trash2 size={14} />
+                          Remover
+                        </button>
+                      </div>
 
                       <p className="mt-2 text-sm text-[#5C5C5C]">
                         Quantidade: {quantity}
@@ -421,6 +832,21 @@ export default function CheckoutPage() {
               )}
             </div>
 
+            <div className="mt-6 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 text-sm">
+              <p className="font-semibold text-[#1A1A1A]">
+                {reservationNotice}
+              </p>
+
+              {hasActiveReservation && (
+                <p className="mt-2 text-[#6F6A63]">
+                  Tempo restante:{" "}
+                  <span className="font-semibold text-[#B89535]">
+                    {formatReservationTime(secondsRemaining)}
+                  </span>
+                </p>
+              )}
+            </div>
+
             <div className="mt-8 space-y-4 border-t border-[#E7E1D8] pt-6">
               <div className="flex justify-between text-[#5C5C5C]">
                 <span>Subtotal</span>
@@ -439,39 +865,26 @@ export default function CheckoutPage() {
             </div>
 
             <button
-              disabled={items.length === 0 || reserving}
-              onClick={handleReserveStock}
+              disabled={items.length === 0 || reserving || creatingOrder}
+              onClick={() => void handleCreatePendingOrder()}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#B89535] py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
               <CreditCard size={20} />
-              {reserving
+              {creatingOrder
+                ? "Criando pedido..."
+                : reserving
                 ? "Reservando..."
-                : hasActiveReservation
-                  ? "Pagamento em breve"
+                : createdOrderId
+                  ? "Pedido criado"
                   : "Ir para pagamento"}
             </button>
 
-            {reservation && (
-              <div className="mt-4 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 text-sm">
-                {hasActiveReservation ? (
-                  <>
-                    <p className="font-semibold text-[#1A1A1A]">
-                      Seus produtos estão reservados por 15 minutos.
-                    </p>
-                    <p className="mt-2 text-[#6F6A63]">
-                      Tempo restante:{" "}
-                      <span className="font-semibold text-[#B89535]">
-                        {formatReservationTime(secondsRemaining)}
-                      </span>
-                    </p>
-                  </>
-                ) : (
-                  <p className="font-semibold text-red-500">
-                    A reserva expirou. Calcule novamente antes de pagar.
-                  </p>
-                )}
-              </div>
+            {createdOrderId && (
+              <p className="mt-3 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 text-center text-sm font-semibold text-[#1A1A1A]">
+                Pedido #{createdOrderId.slice(-8)} criado. Próxima etapa:
+                pagamento.
+              </p>
             )}
 
             <p className="mt-4 text-center text-xs leading-relaxed text-[#8A8A8A]">

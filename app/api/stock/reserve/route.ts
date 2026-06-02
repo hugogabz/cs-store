@@ -4,6 +4,7 @@ import { getPrisma } from "@/services/prisma"
 import {
   getActiveReservedQuantity,
   getAvailableStock,
+  releaseStockReservationGroup,
   releaseExpiredStockReservations,
   RESERVATION_DURATION_MS,
 } from "@/services/stock-reservations"
@@ -114,5 +115,29 @@ export async function POST(request: Request) {
     reservationId: groupId,
     expiresAt: expiresAt.toISOString(),
     message: "Produtos reservados por 15 minutos",
+  })
+}
+
+export async function DELETE(request: Request) {
+  const body = await request.json().catch(() => null)
+  const reservationId = typeof body?.reservationId === "string"
+    ? body.reservationId
+    : ""
+
+  if (!reservationId) {
+    return NextResponse.json(
+      {
+        message: "Reserva invalida.",
+      },
+      {
+        status: 400,
+      }
+    )
+  }
+
+  const removed = await releaseStockReservationGroup(reservationId)
+
+  return NextResponse.json({
+    removed,
   })
 }
