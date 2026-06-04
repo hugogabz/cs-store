@@ -1,14 +1,18 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { AdminNav } from "@/frontend/components/admin/admin-nav"
 import { formatCurrency } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 
 type OrderItem = {
   id: string
   title: string
+  image: string
   price: number
   quantity: number
 }
@@ -28,6 +32,7 @@ type OrderDetails = {
   shippingMethod: string
   total: number
   status: string
+  paymentProvider: string | null
   paymentId: string | null
   paymentUrl: string | null
   receiptUrl: string | null
@@ -36,13 +41,13 @@ type OrderDetails = {
   items: OrderItem[]
 }
 
-const orderStatuses = ["pending", "paid", "shipped", "delivered", "cancelled"]
+const orderStatuses = ["pending", "paid", "shipped", "delivered", "canceled"]
 
 const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  paid: "Paid",
+  pending: "Pendente",
+  paid: "Pago",
   canceled: "Cancelado",
-  cancelled: "Cancelled",
+  cancelled: "Cancelado",
   shipped: "Enviado",
   delivered: "Entregue",
 }
@@ -54,6 +59,10 @@ const statusClasses: Record<string, string> = {
   cancelled: "bg-red-50 text-red-600",
   shipped: "bg-blue-50 text-blue-700",
   delivered: "bg-[#B89535]/15 text-[#8A6800]",
+}
+
+function statusBadgeClass(status: string) {
+  return statusClasses[status] ?? "bg-[#B89535]/15 text-[#8A6800]"
 }
 
 export default function AdminOrderDetailsPage() {
@@ -72,7 +81,7 @@ export default function AdminOrderDetailsPage() {
     }
 
     if (!response.ok) {
-      throw new Error("Pedido não encontrado.")
+      throw new Error("Pedido nao encontrado.")
     }
 
     const data = await response.json()
@@ -99,7 +108,7 @@ export default function AdminOrderDetailsPage() {
       })
       .catch(() => {
         if (!ignore) {
-          toast.error("Não foi possível carregar o pedido.")
+          toast.error("Nao foi possivel carregar o pedido.")
         }
       })
       .finally(() => {
@@ -133,7 +142,7 @@ export default function AdminOrderDetailsPage() {
       }
 
       if (!response.ok) {
-        throw new Error("Não foi possível atualizar o status.")
+        throw new Error("Nao foi possivel atualizar o status.")
       }
 
       await loadOrder()
@@ -142,7 +151,7 @@ export default function AdminOrderDetailsPage() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar o status."
+          : "Nao foi possivel atualizar o status."
       )
     } finally {
       setUpdatingStatus(false)
@@ -160,14 +169,14 @@ export default function AdminOrderDetailsPage() {
   if (!order) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F8F6F2] px-4">
-        <p className="text-[#5C5C5C]">Pedido não encontrado.</p>
+        <p className="text-[#5C5C5C]">Pedido nao encontrado.</p>
       </main>
     )
   }
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-10">
-      <div className="mx-auto max-w-5xl space-y-7">
+      <div className="mx-auto max-w-6xl space-y-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
@@ -176,6 +185,9 @@ export default function AdminOrderDetailsPage() {
             <h1 className="mt-2 text-3xl font-semibold text-[#1A1A1A] md:text-4xl">
               {order.customerName}
             </h1>
+            <p className="mt-2 text-sm text-[#6F6A63]">
+              Criado em {new Date(order.createdAt).toLocaleString("pt-BR")}
+            </p>
           </div>
 
           <Link
@@ -186,6 +198,8 @@ export default function AdminOrderDetailsPage() {
           </Link>
         </div>
 
+        <AdminNav />
+
         <section className="grid gap-5 md:grid-cols-2">
           <div className="rounded-2xl border border-[#E7E1D8] bg-white p-5">
             <h2 className="text-xl font-semibold text-[#1A1A1A]">
@@ -195,7 +209,7 @@ export default function AdminOrderDetailsPage() {
               <p>Nome: {order.customerName}</p>
               <p>E-mail: {order.customerEmail}</p>
               <p>Telefone: {order.customerPhone}</p>
-              <p>CPF: {order.customerCpf ?? "Não informado"}</p>
+              <p>CPF: {order.customerCpf ?? "Nao informado"}</p>
             </div>
           </div>
 
@@ -205,29 +219,42 @@ export default function AdminOrderDetailsPage() {
             </h2>
             <div className="mt-4 space-y-2 text-sm text-[#5C5C5C]">
               <p>CEP: {order.cep}</p>
-              <p>Endereço: {order.address}</p>
-              <p>Cidade: {order.city ?? "Não informada"}</p>
-              <p>Estado: {order.state ?? "Não informado"}</p>
-              <p>Frete: {order.shippingMethod}</p>
+              <p>Endereco: {order.address}</p>
+              <p>Cidade: {order.city ?? "Nao informada"}</p>
+              <p>Estado: {order.state ?? "Nao informado"}</p>
+              <p>Metodo de frete: {order.shippingMethod}</p>
             </div>
           </div>
         </section>
 
         <section className="rounded-2xl border border-[#E7E1D8] bg-white p-5">
-          <h2 className="text-xl font-semibold text-[#1A1A1A]">
-            Itens comprados
-          </h2>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-semibold text-[#1A1A1A]">
+              Itens comprados
+            </h2>
+            <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(order.status)}`}>
+              {statusLabels[order.status] ?? order.status}
+            </span>
+          </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-5 space-y-3">
             {order.items.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col justify-between gap-2 rounded-xl border border-[#E7E1D8] p-4 sm:flex-row"
+                className="grid gap-4 rounded-xl border border-[#E7E1D8] p-3 sm:grid-cols-[72px_1fr_auto] sm:items-center"
               >
+                <Image
+                  src={normalizeProductImageSrc(item.image)}
+                  alt={item.title}
+                  width={72}
+                  height={72}
+                  className="h-[72px] w-[72px] rounded-xl bg-[#F8F6F2] object-cover"
+                />
+
                 <div>
                   <p className="font-semibold text-[#1A1A1A]">{item.title}</p>
                   <p className="mt-1 text-sm text-[#6F6A63]">
-                    Quantidade: {item.quantity}
+                    {item.quantity} unidade(s) x {formatCurrency(item.price)}
                   </p>
                 </div>
 
@@ -239,13 +266,13 @@ export default function AdminOrderDetailsPage() {
           </div>
         </section>
 
-        <section className="grid gap-5 md:grid-cols-[1fr_0.8fr]">
+        <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
           <div className="rounded-2xl border border-[#E7E1D8] bg-white p-5">
             <h2 className="text-xl font-semibold text-[#1A1A1A]">
               Status do pedido
             </h2>
 
-            <p className={`mt-3 w-fit rounded-full px-3 py-1 text-sm font-semibold ${statusClasses[order.status] ?? "bg-[#B89535]/15 text-[#8A6800]"}`}>
+            <p className={`mt-3 w-fit rounded-full px-3 py-1 text-sm font-semibold ${statusBadgeClass(order.status)}`}>
               {statusLabels[order.status] ?? order.status}
             </p>
 
@@ -263,10 +290,12 @@ export default function AdminOrderDetailsPage() {
               ))}
             </div>
 
-            <div className="mt-5 rounded-xl bg-[#F8F6F2] p-4 text-sm text-[#6F6A63]">
-              O checkout InfinitePay é criado a partir do total final: produtos
-              + frete. O paymentUrl e paymentId ficam salvos no pedido. Um
-              webhook futuro poderá atualizar o status para Paid.
+            <div className="mt-5 space-y-2 rounded-xl bg-[#F8F6F2] p-4 text-sm text-[#6F6A63]">
+              <p>paymentProvider: {order.paymentProvider ?? "Ainda nao definido"}</p>
+              <p>paymentId: {order.paymentId ?? "Ainda nao gerado"}</p>
+              <p className="break-all">paymentUrl: {order.paymentUrl ?? "Ainda nao gerado"}</p>
+              <p className="break-all">receiptUrl: {order.receiptUrl ?? "Ainda nao recebido"}</p>
+              <p>Metodo de pagamento: {order.captureMethod ?? "Ainda nao recebido"}</p>
             </div>
           </div>
 
@@ -284,18 +313,26 @@ export default function AdminOrderDetailsPage() {
                 <span>Frete</span>
                 <span>{formatCurrency(order.shippingPrice)}</span>
               </div>
+              <div className="flex justify-between text-[#5C5C5C]">
+                <span>Metodo de frete</span>
+                <span className="text-right">{order.shippingMethod}</span>
+              </div>
               <div className="flex justify-between border-t border-[#E7E1D8] pt-4 text-lg font-semibold text-[#1A1A1A]">
                 <span>Total</span>
                 <span>{formatCurrency(order.total)}</span>
               </div>
             </div>
 
-            <div className="mt-5 space-y-2 text-sm text-[#6F6A63]">
-              <p>paymentId: {order.paymentId ?? "Ainda não gerado"}</p>
-              <p>paymentUrl: {order.paymentUrl ?? "Ainda não gerado"}</p>
-              <p>receiptUrl: {order.receiptUrl ?? "Ainda não recebido"}</p>
-              <p>Método: {order.captureMethod ?? "Ainda não recebido"}</p>
-            </div>
+            {order.paymentUrl && (
+              <a
+                href={order.paymentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 block rounded-full bg-[#B89535] px-5 py-3 text-center text-sm font-semibold text-black transition hover:bg-[#A7832E]"
+              >
+                Abrir link de pagamento
+              </a>
+            )}
           </div>
         </section>
       </div>

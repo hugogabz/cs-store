@@ -5,6 +5,7 @@ import { Upload } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { AdminNav } from "@/frontend/components/admin/admin-nav"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
 import { normalizeSearchText } from "@/shared/utils/search"
 
@@ -344,20 +345,9 @@ export default function AdminPage() {
             </h1>
           </div>
 
-          <button
-            onClick={async () => {
-              await fetch("/api/admin/logout", {
-                method: "POST",
-              })
-
-              toast.success("Sessão encerrada.")
-              router.push("/admin-login")
-            }}
-            className="w-full rounded-full border border-[#E7E1D8] bg-white px-5 py-2.5 text-sm font-semibold transition hover:border-red-300 hover:text-red-500 sm:w-auto"
-          >
-            Sair
-          </button>
         </div>
+
+        <AdminNav />
 
         <section className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
           <div className="mb-7">
