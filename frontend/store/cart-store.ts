@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
+import { toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 
 type CartItem = {
   id: number

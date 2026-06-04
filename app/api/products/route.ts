@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server"
-import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
-import { getPrisma } from "@/services/prisma"
-import { getProducts } from "@/services/products"
-import { toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
+import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
+import { getPrisma } from "@/backend/services/prisma"
+import { getProducts } from "@/backend/services/products"
+import { toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 import {
   normalizeOptionalNumber,
   normalizeRating,
   normalizeRatingCount,
   normalizeStock,
-} from "@/utils/product-meta"
+} from "@/shared/utils/product-meta"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)

@@ -1,9 +1,9 @@
-import { getPrisma } from "@/services/prisma"
+import { getPrisma } from "@/backend/services/prisma"
 import {
   getAvailableStock,
   releaseExpiredStockReservations,
-} from "@/services/stock-reservations"
-import { normalizeProductImageSrc } from "@/utils/images"
+} from "@/backend/services/stock-reservations"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 
 export type Product = {
   id: string

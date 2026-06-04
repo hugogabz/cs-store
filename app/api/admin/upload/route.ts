@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import { NextResponse } from "next/server"
-import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
+import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
 
 export const runtime = "nodejs"
 

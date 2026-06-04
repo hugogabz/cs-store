@@ -3,9 +3,9 @@
 import Image from "next/image"
 import { X } from "lucide-react"
 import { toast } from "sonner"
-import { useCartStore } from "@/store/cart-store"
-import { formatCurrency, toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
+import { useCartStore } from "@/frontend/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 
 type ProductDetailModalProps = {
   category: string

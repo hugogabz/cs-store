@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server"
-import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
-import { getPrisma } from "@/services/prisma"
-import { toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
+import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
+import { getPrisma } from "@/backend/services/prisma"
+import { toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 import {
   normalizeOptionalNumber,
   normalizeRating,
   normalizeRatingCount,
   normalizeStock,
-} from "@/utils/product-meta"
+} from "@/shared/utils/product-meta"
 
 export async function DELETE(
   _request: Request,

@@ -1,13 +1,13 @@
 import { randomUUID } from "crypto"
 import { NextResponse } from "next/server"
-import { getPrisma } from "@/services/prisma"
+import { getPrisma } from "@/backend/services/prisma"
 import {
   getActiveReservedQuantity,
   getAvailableStock,
   releaseStockReservationGroup,
   releaseExpiredStockReservations,
   RESERVATION_DURATION_MS,
-} from "@/services/stock-reservations"
+} from "@/backend/services/stock-reservations"
 
 type ReservationRequestItem = {
   productId?: unknown

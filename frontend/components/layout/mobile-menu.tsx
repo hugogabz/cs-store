@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { House, Grid2X2, ShoppingBag, User } from "lucide-react"
-import { useCartStore } from "@/store/cart-store"
+import { useCartStore } from "@/frontend/store/cart-store"
 
 export function MobileMenu() {
   const [active, setActive] = useState("inicio")

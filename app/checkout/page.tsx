@@ -12,9 +12,9 @@ import {
 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { useCartStore } from "@/store/cart-store"
-import { formatCurrency, toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
+import { useCartStore } from "@/frontend/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 
 const inputClass =
   "rounded-xl border border-[#E7E1D8] bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#B89535]"

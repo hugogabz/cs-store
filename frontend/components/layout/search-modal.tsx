@@ -4,10 +4,10 @@ import Image from "next/image"
 import { Search, ShoppingBag, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { useCartStore } from "@/store/cart-store"
-import { formatCurrency, toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
-import { normalizeSearchText } from "@/utils/search"
+import { useCartStore } from "@/frontend/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
+import { normalizeSearchText } from "@/shared/utils/search"
 
 type Product = {
   id: string

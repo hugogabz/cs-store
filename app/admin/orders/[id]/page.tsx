@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/utils/currency"
+import { formatCurrency } from "@/shared/utils/currency"
 
 type OrderItem = {
   id: string

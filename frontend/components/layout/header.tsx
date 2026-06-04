@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { Search, ShoppingBag, User } from "lucide-react"
-import { useCartStore } from "@/store/cart-store"
-import { SearchModal } from "@/components/layout/search-modal"
+import { useCartStore } from "@/frontend/store/cart-store"
+import { SearchModal } from "@/frontend/components/layout/search-modal"
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)

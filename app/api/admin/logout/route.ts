@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import {
   ADMIN_SESSION_COOKIE,
   shouldUseSecureAdminCookie,
-} from "@/services/admin-auth"
+} from "@/backend/services/admin-auth"
 
 export async function POST() {
   const response = NextResponse.json({

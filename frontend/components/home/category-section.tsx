@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRef } from "react"
-import { ProductCard } from "@/components/products/product-card"
+import { ProductCard } from "@/frontend/components/products/product-card"
 
 type Product = {
   id?: string

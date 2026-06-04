@@ -2,18 +2,18 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { Footer } from "@/components/layout/footer"
-import { MobileMenu } from "@/components/layout/mobile-menu"
-import { CartDrawer } from "@/components/layout/cart-drawer"
-import { ProductCard } from "@/components/products/product-card"
-import { getProducts } from "@/services/products"
+import { Header } from "@/frontend/components/layout/header"
+import { Footer } from "@/frontend/components/layout/footer"
+import { MobileMenu } from "@/frontend/components/layout/mobile-menu"
+import { CartDrawer } from "@/frontend/components/layout/cart-drawer"
+import { ProductCard } from "@/frontend/components/products/product-card"
+import { getProducts } from "@/backend/services/products"
 import {
   categoryPages,
   getCategoryNameBySlug,
   isCategorySlug,
   isSameCategory,
-} from "@/utils/categories"
+} from "@/shared/utils/categories"
 
 export const dynamic = "force-dynamic"
 

@@ -5,8 +5,8 @@ import { Upload } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { normalizeProductImageSrc } from "@/utils/images"
-import { normalizeSearchText } from "@/utils/search"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
+import { normalizeSearchText } from "@/shared/utils/search"
 
 type Product = {
   id: string

@@ -1,4 +1,4 @@
-import { normalizeSearchText } from "@/utils/search"
+import { normalizeSearchText } from "@/shared/utils/search"
 
 export const categoryPages = {
   destaques: {

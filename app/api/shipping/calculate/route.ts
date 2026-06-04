@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getPrisma } from "@/services/prisma"
+import { getPrisma } from "@/backend/services/prisma"
 
 type ShippingRequestItem = {
   productId?: unknown

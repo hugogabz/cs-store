@@ -1,4 +1,4 @@
-import { getPrisma } from "@/services/prisma"
+import { getPrisma } from "@/backend/services/prisma"
 
 export const RESERVATION_DURATION_MS = 15 * 60 * 1000
 

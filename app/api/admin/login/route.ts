@@ -4,7 +4,7 @@ import {
   getAdminSessionSecret,
   isValidAdminPassword,
   shouldUseSecureAdminCookie,
-} from "@/services/admin-auth"
+} from "@/backend/services/admin-auth"
 
 export async function POST(request: Request) {
   const { password } = await request.json()

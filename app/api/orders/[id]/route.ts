@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { isAdminAuthenticated, unauthorizedResponse } from "@/services/admin-auth"
-import { getPrisma } from "@/services/prisma"
+import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
+import { getPrisma } from "@/backend/services/prisma"
 
 const ALLOWED_ORDER_STATUSES = [
   "pending",

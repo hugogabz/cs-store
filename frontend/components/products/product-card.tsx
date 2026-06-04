@@ -2,10 +2,10 @@
 
 import Image from "next/image"
 import { useState } from "react"
-import { ProductDetailModal } from "@/components/products/product-detail-modal"
-import { useCartStore } from "@/store/cart-store"
-import { formatCurrency, toNumberPrice } from "@/utils/currency"
-import { normalizeProductImageSrc } from "@/utils/images"
+import { ProductDetailModal } from "@/frontend/components/products/product-detail-modal"
+import { useCartStore } from "@/frontend/store/cart-store"
+import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
+import { normalizeProductImageSrc } from "@/shared/utils/images"
 import { toast } from "sonner"
 
 type ProductCardProps = {
