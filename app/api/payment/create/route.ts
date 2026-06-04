@@ -113,7 +113,7 @@ export async function POST(request: Request) {
         description: order.shippingMethod,
       },
     ],
-    redirect_url: `${siteUrl}/checkout/success?orderId=${order.id}`,
+    redirect_url: `${siteUrl}/checkout/success`,
   }
 
   const response = await fetch("https://api.checkout.infinitepay.io/links", {

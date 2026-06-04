@@ -30,6 +30,8 @@ type OrderDetails = {
   status: string
   paymentId: string | null
   paymentUrl: string | null
+  receiptUrl: string | null
+  captureMethod: string | null
   createdAt: string
   items: OrderItem[]
 }
@@ -262,10 +264,9 @@ export default function AdminOrderDetailsPage() {
             </div>
 
             <div className="mt-5 rounded-xl bg-[#F8F6F2] p-4 text-sm text-[#6F6A63]">
-              Aqui será chamada a API da InfinitePay para criar o link de
-              pagamento. O valor enviado será o total final: produtos + frete.
-              O paymentUrl e paymentId serão salvos no pedido quando a API
-              retornar. Um webhook futuro atualizará o status para pago.
+              O checkout InfinitePay é criado a partir do total final: produtos
+              + frete. O paymentUrl e paymentId ficam salvos no pedido. Um
+              webhook futuro poderá atualizar o status para Paid.
             </div>
           </div>
 
@@ -292,6 +293,8 @@ export default function AdminOrderDetailsPage() {
             <div className="mt-5 space-y-2 text-sm text-[#6F6A63]">
               <p>paymentId: {order.paymentId ?? "Ainda não gerado"}</p>
               <p>paymentUrl: {order.paymentUrl ?? "Ainda não gerado"}</p>
+              <p>receiptUrl: {order.receiptUrl ?? "Ainda não recebido"}</p>
+              <p>Método: {order.captureMethod ?? "Ainda não recebido"}</p>
             </div>
           </div>
         </section>

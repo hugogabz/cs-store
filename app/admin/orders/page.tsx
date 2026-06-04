@@ -13,6 +13,7 @@ type OrderSummary = {
   shippingPrice: number
   total: number
   status: string
+  captureMethod: string | null
   createdAt: string
 }
 
@@ -124,6 +125,9 @@ export default function AdminOrdersPage() {
                 <div className="text-sm text-[#5C5C5C]">
                   <p>Total: {formatCurrency(order.total)}</p>
                   <p>Frete: {formatCurrency(order.shippingPrice)}</p>
+                  {order.captureMethod && (
+                    <p>Pagamento: {order.captureMethod}</p>
+                  )}
                 </div>
 
                 <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[order.status] ?? "bg-[#B89535]/15 text-[#8A6800]"}`}>
