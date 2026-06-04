@@ -52,20 +52,20 @@ export function CategorySection({
   return (
     <section
       id={id}
-      className="scroll-mt-24 bg-[#F8F6F2] px-4 py-10 md:px-8 md:py-16"
+      className="scroll-mt-24 bg-[#F8F6F2] px-4 py-12 md:px-8 md:py-16"
     >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 md:mb-9 md:flex-row md:items-end md:justify-between">
+        <div className="mb-7 flex flex-col gap-5 md:mb-9 md:flex-row md:items-end md:justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B89535] md:text-sm">
               CS STORE
             </span>
 
-            <h2 className="mt-3 text-2xl font-semibold text-[#1A1A1A] md:text-5xl">
+            <h2 className="mt-3 text-3xl font-semibold text-[#1A1A1A] md:text-5xl">
               {title}
             </h2>
 
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#5C5C5C] md:mt-4 md:text-base">
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#5C5C5C] md:text-base">
               {subtitle}
             </p>
           </div>
@@ -107,12 +107,12 @@ export function CategorySection({
           {products.length > 0 ? (
             <div
               ref={carouselRef}
-              className="flex snap-x gap-3 overflow-x-auto scroll-smooth pb-4 pr-10 scrollbar-hide sm:gap-4 md:gap-5 md:px-2"
+              className="flex snap-x gap-6 overflow-x-auto scroll-smooth pb-6 pr-12 scrollbar-hide md:px-2"
             >
               {products.map((product) => (
                 <div
                   key={product.id ?? product.title}
-                  className="flex min-w-[42%] snap-start sm:min-w-[31%] md:min-w-[calc((100%_-_40px)/3)] lg:min-w-[calc((100%_-_60px)/4)]"
+                  className="min-w-[82%] snap-start sm:min-w-[48%] md:min-w-[calc((100%_-_48px)/3)] lg:min-w-[calc((100%_-_72px)/4)]"
                 >
                   <ProductCard {...product} />
                 </div>

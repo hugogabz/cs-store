@@ -45,43 +45,42 @@ export function ProductCard({
 
   return (
     <>
-      <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white shadow-[0_8px_24px_rgba(26,26,26,0.035)] transition duration-300 hover:border-[#D8CBB9] hover:shadow-[0_12px_30px_rgba(26,26,26,0.06)]">
+      <div className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white shadow-[0_10px_30px_rgba(26,26,26,0.04)] transition duration-300 hover:border-[#D8CBB9] hover:shadow-[0_14px_34px_rgba(26,26,26,0.07)]">
         <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F8F6F2]">
           <Image
             src={imageSrc}
             alt={title}
             fill
             sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 44vw"
-            className="object-contain p-2.5 transition duration-500 group-hover:scale-[1.01] md:p-3"
+            className="object-contain p-3 transition duration-500 group-hover:scale-[1.01] md:p-4"
           />
         </div>
 
-        <div className="flex flex-1 flex-col space-y-2 p-3 md:space-y-2.5 md:p-4">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#B89535] md:text-[11px]">
+        <div className="flex flex-1 flex-col p-4 md:p-5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B89535]">
             {category}
           </span>
 
-          <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-tight text-[#1A1A1A] md:min-h-11 md:text-lg">
+          <h3 className="mt-2.5 line-clamp-2 min-h-12 text-base font-semibold leading-tight text-[#1A1A1A] md:text-lg">
             {title}
           </h3>
 
-          <p className="text-sm font-semibold tracking-tight text-[#1A1A1A] md:text-base">
-            {formatCurrency(numericPrice)}
-          </p>
+          <div className="mt-auto pt-5">
+            <p className="text-base font-semibold tracking-tight text-[#1A1A1A] md:text-lg">
+              {formatCurrency(numericPrice)}
+            </p>
 
-          <p
-            className={`text-xs font-semibold ${
-              isUnavailable
-                ? "text-red-500"
-                : availableStock <= 5
-                  ? "text-[#B89535]"
-                  : "text-emerald-700"
-            }`}
-          >
-            {stockLabel}
-          </p>
-
-          <div className="mt-auto flex flex-col gap-2 pt-1">
+            <p
+              className={`mt-2 text-xs font-semibold ${
+                isUnavailable
+                  ? "text-red-500"
+                  : availableStock <= 5
+                    ? "text-[#B89535]"
+                    : "text-emerald-700"
+              }`}
+            >
+              {stockLabel}
+            </p>
             <button
               disabled={isUnavailable}
               onClick={() => {
@@ -102,7 +101,7 @@ export function ProductCard({
                   description: title,
                 })
               }}
-              className="w-full rounded-full bg-[#B89535] px-3 py-2.5 text-xs font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63] md:px-4 md:text-sm"
+              className="mt-4 w-full rounded-full bg-[#B89535] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63]"
             >
               {isUnavailable ? "Indisponível" : "Comprar"}
             </button>
@@ -110,7 +109,7 @@ export function ProductCard({
             <button
               type="button"
               onClick={() => setIsDetailOpen(true)}
-              className="py-1 text-xs font-semibold text-[#6F6A63] transition hover:text-[#B89535] md:text-sm"
+              className="mt-2 w-full py-1.5 text-sm font-semibold text-[#6F6A63] transition hover:text-[#B89535]"
             >
               Ver detalhes
             </button>
