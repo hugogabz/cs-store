@@ -17,11 +17,21 @@ type OrderSummary = {
 }
 
 const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
+  pending: "Pending",
+  paid: "Paid",
   canceled: "Cancelado",
+  cancelled: "Cancelled",
   shipped: "Enviado",
   delivered: "Entregue",
+}
+
+const statusClasses: Record<string, string> = {
+  pending: "bg-yellow-50 text-yellow-700",
+  paid: "bg-emerald-50 text-emerald-700",
+  canceled: "bg-red-50 text-red-600",
+  cancelled: "bg-red-50 text-red-600",
+  shipped: "bg-blue-50 text-blue-700",
+  delivered: "bg-[#B89535]/15 text-[#8A6800]",
 }
 
 export default function AdminOrdersPage() {
@@ -116,7 +126,7 @@ export default function AdminOrdersPage() {
                   <p>Frete: {formatCurrency(order.shippingPrice)}</p>
                 </div>
 
-                <span className="w-fit rounded-full bg-[#B89535]/15 px-3 py-1 text-xs font-semibold text-[#8A6800]">
+                <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[order.status] ?? "bg-[#B89535]/15 text-[#8A6800]"}`}>
                   {statusLabels[order.status] ?? order.status}
                 </span>
 

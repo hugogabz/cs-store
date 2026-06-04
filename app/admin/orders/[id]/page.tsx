@@ -34,14 +34,24 @@ type OrderDetails = {
   items: OrderItem[]
 }
 
-const orderStatuses = ["pending", "paid", "shipped", "delivered", "canceled"]
+const orderStatuses = ["pending", "paid", "shipped", "delivered", "cancelled"]
 
 const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
+  pending: "Pending",
+  paid: "Paid",
   canceled: "Cancelado",
+  cancelled: "Cancelled",
   shipped: "Enviado",
   delivered: "Entregue",
+}
+
+const statusClasses: Record<string, string> = {
+  pending: "bg-yellow-50 text-yellow-700",
+  paid: "bg-emerald-50 text-emerald-700",
+  canceled: "bg-red-50 text-red-600",
+  cancelled: "bg-red-50 text-red-600",
+  shipped: "bg-blue-50 text-blue-700",
+  delivered: "bg-[#B89535]/15 text-[#8A6800]",
 }
 
 export default function AdminOrderDetailsPage() {
@@ -233,7 +243,7 @@ export default function AdminOrderDetailsPage() {
               Status do pedido
             </h2>
 
-            <p className="mt-3 w-fit rounded-full bg-[#B89535]/15 px-3 py-1 text-sm font-semibold text-[#8A6800]">
+            <p className={`mt-3 w-fit rounded-full px-3 py-1 text-sm font-semibold ${statusClasses[order.status] ?? "bg-[#B89535]/15 text-[#8A6800]"}`}>
               {statusLabels[order.status] ?? order.status}
             </p>
 

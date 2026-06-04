@@ -6,6 +6,7 @@ const ALLOWED_ORDER_STATUSES = [
   "pending",
   "paid",
   "canceled",
+  "cancelled",
   "shipped",
   "delivered",
 ]

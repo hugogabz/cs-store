@@ -411,25 +411,29 @@ export default function CheckoutPage() {
   async function handleCreatePendingOrder() {
     if (items.length === 0) {
       toast.error("Carrinho vazio. Adicione produtos antes de continuar.")
-      return
+      return null
     }
 
     if (!selectedShipping) {
       toast.error("Calcule e selecione uma opção de frete antes de continuar.")
-      return
+      return null
     }
 
     if (!customerName || !customerEmail || !customerPhone || !cepDestino || !address) {
       toast.error("Preencha nome, e-mail, telefone, CEP e endereço.")
-      return
+      return null
     }
 
     if (!hasActiveReservation || cartSignature !== reservedCartSignature) {
       const reservedNow = await ensureActiveReservation()
 
       if (!reservedNow) {
-        return
+        return null
       }
+    }
+
+    if (createdOrderId) {
+      return createdOrderId
     }
 
     setCreatingOrder(true)
@@ -470,11 +474,49 @@ export default function CheckoutPage() {
       setCreatedOrderId(data.orderId)
       setReservationNotice("Pedido criado. Próxima etapa: pagamento.")
       toast.success("Pedido criado. Próxima etapa: pagamento.")
+      return data.orderId as string
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível criar o pedido."
+      )
+      return null
+    } finally {
+      setCreatingOrder(false)
+    }
+  }
+
+  async function handleFinalizePayment() {
+    const orderId = await handleCreatePendingOrder()
+
+    if (!orderId) return
+
+    setCreatingOrder(true)
+
+    try {
+      const response = await fetch("/api/payment/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Não foi possível iniciar o pagamento.")
+      }
+
+      window.location.href = data.paymentUrl
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível iniciar o pagamento."
       )
     } finally {
       setCreatingOrder(false)
@@ -866,7 +908,7 @@ export default function CheckoutPage() {
 
             <button
               disabled={items.length === 0 || reserving || creatingOrder}
-              onClick={() => void handleCreatePendingOrder()}
+              onClick={() => void handleFinalizePayment()}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#B89535] py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
@@ -876,21 +918,20 @@ export default function CheckoutPage() {
                 : reserving
                 ? "Reservando..."
                 : createdOrderId
-                  ? "Pedido criado"
-                  : "Ir para pagamento"}
+                  ? "Finalizar pagamento"
+                  : "Finalizar pagamento"}
             </button>
 
             {createdOrderId && (
               <p className="mt-3 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 text-center text-sm font-semibold text-[#1A1A1A]">
                 Pedido #{createdOrderId.slice(-8)} criado. Próxima etapa:
-                pagamento.
+                pagamento InfinitePay.
               </p>
             )}
 
             <p className="mt-4 text-center text-xs leading-relaxed text-[#8A8A8A]">
-              Integração de pagamento ainda não habilitada. No próximo passo,
-              este fluxo chamará o Mercado Pago; ao pagamento aprovado, o
-              estoque será baixado e as reservas deste pedido serão removidas.
+              O pagamento será iniciado no checkout seguro da InfinitePay. O
+              status do pedido será atualizado após a verificação do pagamento.
             </p>
           </aside>
         </div>
