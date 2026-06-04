@@ -600,12 +600,12 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F6F2] px-4 py-6 md:py-10">
+    <main className="min-h-screen bg-[#F8F6F2] px-4 pb-12 pt-5 md:py-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
-            className="logo-font text-3xl font-bold text-[#B89535] md:text-4xl"
+            className="logo-font text-2xl font-bold text-[#B89535] md:text-4xl"
           >
             CS Store
           </Link>
@@ -619,12 +619,12 @@ export default function CheckoutPage() {
           </Link>
         </div>
 
-        <div className="mt-7 rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-8">
+        <div className="mt-6 rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:mt-7 md:p-8">
           <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B89535]">
             Checkout seguro
           </span>
 
-          <h1 className="mt-3 text-3xl font-semibold text-[#1A1A1A] md:text-5xl">
+          <h1 className="mt-3 text-2xl font-semibold text-[#1A1A1A] md:text-5xl">
             Finalize sua compra
           </h1>
 
@@ -633,7 +633,7 @@ export default function CheckoutPage() {
             de pagamento.
           </p>
 
-          <div className="mt-7 grid gap-3 md:grid-cols-3">
+          <div className="mt-6 grid gap-3 md:mt-7 md:grid-cols-3">
             <div className="rounded-xl bg-[#F8F6F2] p-4">
               <Truck className="mb-3 text-[#B89535]" />
               <p className="text-sm font-semibold">Entrega rápida</p>
@@ -651,12 +651,12 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="mt-7 grid gap-7 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
           <section>
-            <form className="space-y-7">
+            <form className="space-y-6 md:space-y-7">
               <div className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
                 <div className="border-b border-[#E7E1D8] pb-5">
-                  <h2 className="text-2xl font-semibold text-[#1A1A1A]">
+                  <h2 className="text-xl font-semibold text-[#1A1A1A] md:text-2xl">
                     Dados pessoais
                   </h2>
                   <p className="mt-2 text-sm text-[#6F6A63]">
@@ -695,7 +695,7 @@ export default function CheckoutPage() {
 
               <div className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
                 <div className="border-b border-[#E7E1D8] pb-5">
-                  <h2 className="text-2xl font-semibold text-[#1A1A1A]">
+                  <h2 className="text-xl font-semibold text-[#1A1A1A] md:text-2xl">
                     Endereço de entrega
                   </h2>
                   <p className="mt-2 text-sm text-[#6F6A63]">
@@ -794,10 +794,10 @@ export default function CheckoutPage() {
             </form>
           </section>
 
-          <aside className="h-fit rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] lg:sticky lg:top-28 md:p-7">
+          <aside className="h-fit rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7 lg:sticky lg:top-28">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-[#1A1A1A]">
+                <h2 className="text-xl font-semibold text-[#1A1A1A] md:text-2xl">
                   Resumo do pedido
                 </h2>
                 <p className="mt-1 text-sm text-[#6F6A63]">

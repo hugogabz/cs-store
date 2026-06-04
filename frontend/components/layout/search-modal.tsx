@@ -98,11 +98,11 @@ export function SearchModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-black/45 p-3 backdrop-blur-sm md:p-4"
+      className="fixed inset-0 z-[80] bg-black/45 p-3 pb-24 backdrop-blur-sm md:p-4"
       onClick={onClose}
     >
       <div
-        className="mx-auto flex max-h-[calc(100dvh-32px)] max-w-2xl flex-col rounded-2xl bg-white p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:mt-24 md:max-h-[640px] md:p-6"
+        className="mx-auto flex max-h-[calc(100dvh-104px)] max-w-2xl flex-col rounded-2xl bg-white p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:mt-24 md:max-h-[640px] md:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center gap-3 border-b border-[#E7E1D8] pb-4 md:mb-6 md:gap-4">

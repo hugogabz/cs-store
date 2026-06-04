@@ -30,7 +30,7 @@ export default async function Home() {
     <>
       <Header />
 
-      <main>
+      <main className="pb-6 md:pb-0">
         <HeroSection />
 
         <BenefitsSection />

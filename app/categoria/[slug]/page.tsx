@@ -70,7 +70,7 @@ export default async function CategoryPage({
     <>
       <Header />
 
-      <main className="min-h-screen bg-[#F8F6F2] px-4 py-8 md:px-8 md:py-12">
+      <main className="min-h-screen bg-[#F8F6F2] px-4 pb-28 pt-8 md:px-8 md:py-12">
         <div className="mx-auto max-w-7xl">
           <Link
             href="/"
@@ -80,12 +80,12 @@ export default async function CategoryPage({
             Voltar para loja
           </Link>
 
-          <section className="mt-8 rounded-2xl border border-[#E7E1D8] bg-white p-6 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-9">
+          <section className="mt-8 rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-9">
             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B89535] md:text-sm">
               CS STORE
             </span>
 
-            <h1 className="mt-4 text-4xl font-semibold text-[#1A1A1A] md:text-6xl">
+            <h1 className="mt-4 text-3xl font-semibold text-[#1A1A1A] md:text-6xl">
               {categoryPage.title}
             </h1>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { House, Grid2X2, ShoppingBag, User } from "lucide-react"
+import { Grid2X2, House, Mail, ShoppingBag } from "lucide-react"
 import { useCartStore } from "@/frontend/store/cart-store"
 
 export function MobileMenu() {
@@ -23,15 +23,15 @@ export function MobileMenu() {
   }
 
   const itemClass = (name: string) =>
-    `relative flex flex-col items-center gap-1 text-xs transition duration-300 ${
+    `relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition duration-300 ${
       active === name
-        ? "scale-105 text-[#B89535]"
-        : "text-neutral-500"
+        ? "bg-[#B89535]/12 text-[#8A6800]"
+        : "text-neutral-500 hover:bg-neutral-50 hover:text-[#1A1A1A]"
     }`
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-neutral-200 bg-white shadow-[0_-12px_30px_rgba(0,0,0,0.08)] md:hidden">
-      <div className="flex h-[76px] items-center justify-around bg-white px-2">
+    <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-neutral-200 bg-white/95 shadow-[0_-10px_28px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
+      <div className="mx-auto grid h-[78px] max-w-md grid-cols-4 items-center gap-1 px-2 pb-[env(safe-area-inset-bottom)]">
         <a
           href="#inicio"
           onClick={() => handleNavigate("inicio")}
@@ -40,7 +40,7 @@ export function MobileMenu() {
           <House size={21} />
           Home
           {active === "inicio" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
+            <span className="absolute bottom-0 h-1 w-7 rounded-full bg-[#B89535]" />
           )}
         </a>
 
@@ -52,7 +52,7 @@ export function MobileMenu() {
           <Grid2X2 size={21} />
           Produtos
           {active === "produtos" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
+            <span className="absolute bottom-0 h-1 w-7 rounded-full bg-[#B89535]" />
           )}
         </a>
 
@@ -73,7 +73,7 @@ export function MobileMenu() {
           Carrinho
 
           {active === "carrinho" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
+            <span className="absolute bottom-0 h-1 w-7 rounded-full bg-[#B89535]" />
           )}
         </button>
 
@@ -82,10 +82,10 @@ export function MobileMenu() {
           onClick={() => handleNavigate("conta")}
           className={itemClass("conta")}
         >
-          <User size={21} />
-          Conta
+          <Mail size={21} />
+          Contato
           {active === "conta" && (
-            <span className="absolute -bottom-2 h-1 w-8 rounded-full bg-[#B89535]" />
+            <span className="absolute bottom-0 h-1 w-7 rounded-full bg-[#B89535]" />
           )}
         </a>
       </div>

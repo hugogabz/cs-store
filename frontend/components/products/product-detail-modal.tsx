@@ -52,14 +52,14 @@ export function ProductDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[90] bg-black/45 p-3 backdrop-blur-sm md:p-6"
+      className="fixed inset-0 z-[90] bg-black/45 p-2 pb-24 backdrop-blur-sm md:p-6"
       onClick={onClose}
     >
       <div
-        className="mx-auto flex max-h-[calc(100dvh-24px)] max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:max-h-[calc(100dvh-48px)] md:grid md:grid-cols-[0.95fr_1.05fr]"
+        className="mx-auto flex max-h-[calc(100dvh-96px)] max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:max-h-[calc(100dvh-48px)] md:grid md:grid-cols-[0.95fr_1.05fr]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F8F6F2] md:self-center">
+        <div className="relative aspect-square max-h-[42dvh] overflow-hidden rounded-2xl bg-[#F8F6F2] md:max-h-none md:self-center">
           <Image
             src={imageSrc}
             alt={title}
@@ -69,7 +69,7 @@ export function ProductDetailModal({
           />
         </div>
 
-        <div className="flex min-h-0 flex-col overflow-y-auto p-5 md:p-8">
+        <div className="flex min-h-0 flex-col overflow-y-auto p-4 md:p-8">
           <div className="flex items-start justify-between gap-4">
             <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[#B89535]">
               {category}
@@ -84,11 +84,11 @@ export function ProductDetailModal({
             </button>
           </div>
 
-          <h2 className="mt-5 text-3xl font-semibold leading-tight text-[#1A1A1A] md:text-4xl">
+          <h2 className="mt-4 text-2xl font-semibold leading-tight text-[#1A1A1A] md:mt-5 md:text-4xl">
             {title}
           </h2>
 
-          <p className="mt-4 text-2xl font-semibold tracking-tight text-[#1A1A1A]">
+          <p className="mt-3 text-xl font-semibold tracking-tight text-[#1A1A1A] md:mt-4 md:text-2xl">
             {formatCurrency(numericPrice)}
           </p>
 
@@ -150,7 +150,7 @@ export function ProductDetailModal({
                 description: title,
               })
             }}
-            className="mt-8 rounded-full bg-[#B89535] px-6 py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63]"
+            className="mt-6 rounded-full bg-[#B89535] px-6 py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63] md:mt-8"
           >
             {isUnavailable ? "Produto indisponível" : "Adicionar ao carrinho"}
           </button>

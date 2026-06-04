@@ -15,10 +15,10 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-8">
           <a
             href="#inicio"
-            className="logo-font text-3xl font-bold text-[#B89535] transition hover:text-[#A7832E] md:text-4xl"
+            className="logo-font text-2xl font-bold text-[#B89535] transition hover:text-[#A7832E] md:text-4xl"
           >
             CS Store
           </a>
