@@ -401,11 +401,11 @@ export default function CheckoutPage() {
 
   async function ensureActiveReservation() {
     if (hasActiveReservation && cartSignature === reservedCartSignature) {
-      return true
+      return reservation
     }
 
     const nextReservation = await handleReserveStock()
-    return Boolean(nextReservation)
+    return nextReservation
   }
 
   async function handleCreatePendingOrder() {
@@ -424,12 +424,10 @@ export default function CheckoutPage() {
       return null
     }
 
-    if (!hasActiveReservation || cartSignature !== reservedCartSignature) {
-      const reservedNow = await ensureActiveReservation()
+    const activeReservation = await ensureActiveReservation()
 
-      if (!reservedNow) {
-        return null
-      }
+    if (!activeReservation) {
+      return null
     }
 
     if (createdOrderId) {
@@ -453,7 +451,7 @@ export default function CheckoutPage() {
           address,
           city,
           state,
-          reservationId: reservation?.reservationId,
+          reservationId: activeReservation.reservationId,
           shippingMethod: `${selectedShipping.name} — ${selectedShipping.company}`,
           shippingPrice: selectedShipping.price,
           items: items.map((item) => ({
