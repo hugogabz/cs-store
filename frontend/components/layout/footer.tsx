@@ -1,6 +1,7 @@
 import { Camera, Mail, MapPin } from "lucide-react"
 
 const customerEmail = "souzacristiane931@gmail.com"
+const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${customerEmail}`
 const instagramUrl =
   "https://www.instagram.com/cs.trancinhas?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
 
@@ -59,7 +60,9 @@ export function Footer() {
 
           <div className="space-y-4 text-sm text-[#5C5C5C]">
             <a
-              href={`mailto:${customerEmail}`}
+              href={gmailComposeUrl}
+              target="_blank"
+              rel="noreferrer"
               className="flex items-start gap-3 rounded-xl py-1 transition hover:text-[#B89535]"
             >
               <Mail size={17} className="mt-0.5 shrink-0 text-[#B89535]" />
@@ -68,7 +71,7 @@ export function Footer() {
 
             <div className="flex items-center gap-3 py-1">
               <MapPin size={17} className="shrink-0 text-[#B89535]" />
-              Brasil
+              Almenara, Minas Gerais
             </div>
           </div>
         </div>
@@ -91,9 +94,11 @@ export function Footer() {
             </a>
 
             <a
-              href={`mailto:${customerEmail}`}
+              href={gmailComposeUrl}
+              target="_blank"
+              rel="noreferrer"
               className="inline-flex w-fit items-center gap-3 rounded-full border border-[#E7E1D8] px-4 py-3 font-semibold transition hover:border-[#B89535] hover:text-[#B89535]"
-              aria-label="Abrir e-mail de contato"
+              aria-label="Abrir Gmail para enviar e-mail de contato"
             >
               <Mail size={18} />
               Email

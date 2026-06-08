@@ -245,7 +245,7 @@ async function calculateMelhorEnvioShipping(payload: MelhorEnvioPayload) {
       Authorization: `Bearer ${token}`,
       "User-Agent":
         process.env.MELHOR_ENVIO_USER_AGENT ??
-        "CS Store (contato@csstore.com.br)",
+        "CS Store (souzacristiane931@gmail.com)",
     },
     body: JSON.stringify(payload),
   }).catch(() => {
