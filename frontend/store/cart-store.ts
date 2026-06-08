@@ -26,6 +26,8 @@ type CartStore = {
 
   decreaseQuantity: (id: number) => void
 
+  clearCart: () => void
+
   isOpen: boolean
 
   openCart: () => void
@@ -162,6 +164,12 @@ export const useCartStore = create<CartStore>()(
             )
             .filter((item) => item.quantity > 0),
         })),
+
+      clearCart: () =>
+        set({
+          items: [],
+          isOpen: false,
+        }),
 
       openCart: () => set({ isOpen: true }),
 

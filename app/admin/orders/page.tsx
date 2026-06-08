@@ -44,7 +44,7 @@ const statusClasses: Record<string, string> = {
   canceled: "bg-red-50 text-red-600",
   cancelled: "bg-red-50 text-red-600",
   shipped: "bg-blue-50 text-blue-700",
-  delivered: "bg-[#B89535]/15 text-[#8A6800]",
+  delivered: "bg-slate-100 text-emerald-800",
 }
 
 function statusBadgeClass(status: string) {

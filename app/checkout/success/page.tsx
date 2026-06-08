@@ -3,8 +3,12 @@
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
+import { useCartStore } from "@/frontend/store/cart-store"
 
 type ConfirmationState = "checking" | "paid" | "pending" | "failed"
+
+const CHECKOUT_STORAGE_KEY = "cs-store-checkout-reservation"
+const CART_STORAGE_KEY = "cs-store-cart"
 
 const captureMethodLabels: Record<string, string> = {
   credit: "Cartão",
@@ -24,6 +28,7 @@ function getCaptureMethodLabel(value: string | null) {
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
+  const clearCart = useCartStore((state) => state.clearCart)
   const [confirmationState, setConfirmationState] =
     useState<ConfirmationState>("checking")
 
@@ -33,6 +38,7 @@ function CheckoutSuccessContent() {
       orderNsu: searchParams.get("order_nsu") ?? searchParams.get("orderId"),
       slug: searchParams.get("slug"),
       captureMethod: searchParams.get("capture_method"),
+      transactionId: searchParams.get("transaction_id"),
       transactionNsu: searchParams.get("transaction_nsu"),
     }
   }, [searchParams])
@@ -40,7 +46,14 @@ function CheckoutSuccessContent() {
   const captureMethodLabel = getCaptureMethodLabel(returnData.captureMethod)
 
   useEffect(() => {
-    if (!returnData.orderNsu) {
+    const hasPaymentIdentifier = Boolean(
+      returnData.orderNsu ||
+        returnData.slug ||
+        returnData.transactionId ||
+        returnData.transactionNsu
+    )
+
+    if (!hasPaymentIdentifier) {
       queueMicrotask(() => setConfirmationState("pending"))
       return
     }
@@ -59,6 +72,9 @@ function CheckoutSuccessContent() {
         if (ignore) return
 
         if (data?.status === "paid") {
+          clearCart()
+          window.localStorage.removeItem(CART_STORAGE_KEY)
+          window.localStorage.removeItem(CHECKOUT_STORAGE_KEY)
           setConfirmationState("paid")
           return
         }
@@ -79,7 +95,7 @@ function CheckoutSuccessContent() {
     return () => {
       ignore = true
     }
-  }, [returnData])
+  }, [clearCart, returnData])
 
   const title =
     confirmationState === "paid"
@@ -92,7 +108,7 @@ function CheckoutSuccessContent() {
 
   const description =
     confirmationState === "paid"
-      ? "Recebemos a confirmação da InfinitePay e seu pedido já foi atualizado."
+      ? "Compra finalizada com sucesso. Recebemos a confirmação da InfinitePay e seu pedido já foi atualizado."
       : confirmationState === "failed"
         ? "A confirmação não retornou como aprovada. Se você pagou, acompanhe o pedido ou tente novamente em instantes."
         : "Estamos verificando sua compra. Isso pode levar alguns instantes."
@@ -125,10 +141,10 @@ function CheckoutSuccessContent() {
             </p>
           )}
 
-          {returnData.transactionNsu && (
+          {(returnData.transactionId || returnData.transactionNsu) && (
             <p>
               <span className="font-semibold text-[#1A1A1A]">Transação:</span>{" "}
-              {returnData.transactionNsu}
+              {returnData.transactionId || returnData.transactionNsu}
             </p>
           )}
         </div>

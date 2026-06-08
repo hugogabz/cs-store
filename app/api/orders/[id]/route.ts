@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
 import { getPrisma } from "@/backend/services/prisma"
+import { releaseStockReservationGroup } from "@/backend/services/stock-reservations"
 
 const ALLOWED_ORDER_STATUSES = [
   "pending",
@@ -15,6 +16,175 @@ type RouteContext = {
   params: Promise<{
     id: string
   }>
+}
+
+type OrderControlRow = {
+  status: string
+  reservationId: string | null
+  stockDeductedAt: Date | string | null
+}
+
+function createManualTestPaymentId(orderId: string) {
+  return `manual-test-${orderId.slice(-8)}-${Date.now()}`
+}
+
+async function releaseReservationIfPossible(reservationId: string | null) {
+  if (!reservationId) return 0
+
+  return releaseStockReservationGroup(reservationId)
+}
+
+async function getOrderWithItems(id: string) {
+  const prisma = getPrisma()
+
+  return prisma.order.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      items: true,
+    },
+  })
+}
+
+async function markOrderAsPaidForTest(id: string) {
+  const prisma = getPrisma()
+  let reservationId: string | null = null
+
+  const result = await prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<OrderControlRow[]>`
+      SELECT "status", "reservationId", "stockDeductedAt"
+      FROM "Order"
+      WHERE "id" = ${id}
+      LIMIT 1
+    `
+
+    const order = rows[0]
+
+    if (!order) {
+      throw new Error("ORDER_NOT_FOUND")
+    }
+
+    reservationId = order.reservationId
+    const shouldDeductStock = order.status !== "paid" && !order.stockDeductedAt
+
+    if (shouldDeductStock) {
+      const items = await tx.orderItem.findMany({
+        where: {
+          orderId: id,
+        },
+      })
+
+      for (const item of items) {
+        if (!item.productId) continue
+
+        const quantity = Math.max(1, item.quantity)
+        const updated = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            stock: {
+              gte: quantity,
+            },
+          },
+          data: {
+            stock: {
+              decrement: quantity,
+            },
+          },
+        })
+
+        if (updated.count === 0) {
+          throw new Error(`Estoque insuficiente para ${item.title}.`)
+        }
+      }
+    }
+
+    const now = new Date()
+    const paymentId = createManualTestPaymentId(id)
+
+    if (shouldDeductStock) {
+      await tx.$executeRaw`
+        UPDATE "Order"
+        SET
+          "status" = 'paid',
+          "paymentProvider" = COALESCE(NULLIF("paymentProvider", ''), 'manual-test'),
+          "paymentId" = COALESCE(NULLIF("paymentId", ''), ${paymentId}),
+          "stockDeductedAt" = ${now},
+          "updatedAt" = ${now}
+        WHERE "id" = ${id}
+      `
+    } else {
+      await tx.$executeRaw`
+        UPDATE "Order"
+        SET
+          "status" = 'paid',
+          "paymentProvider" = COALESCE(NULLIF("paymentProvider", ''), 'manual-test'),
+          "paymentId" = COALESCE(NULLIF("paymentId", ''), ${paymentId}),
+          "updatedAt" = ${now}
+        WHERE "id" = ${id}
+      `
+    }
+
+    return {
+      deductedStock: shouldDeductStock,
+    }
+  })
+
+  const releasedReservations = await releaseReservationIfPossible(reservationId)
+  const order = await getOrderWithItems(id)
+
+  if (!order) {
+    throw new Error("ORDER_NOT_FOUND")
+  }
+
+  return {
+    order,
+    deductedStock: result.deductedStock,
+    releasedReservations,
+  }
+}
+
+async function markOrderAsCanceled(id: string) {
+  const prisma = getPrisma()
+  let reservationId: string | null = null
+
+  await prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<OrderControlRow[]>`
+      SELECT "status", "reservationId", "stockDeductedAt"
+      FROM "Order"
+      WHERE "id" = ${id}
+      LIMIT 1
+    `
+
+    const order = rows[0]
+
+    if (!order) {
+      throw new Error("ORDER_NOT_FOUND")
+    }
+
+    reservationId = order.reservationId
+    const now = new Date()
+
+    await tx.$executeRaw`
+      UPDATE "Order"
+      SET
+        "status" = 'canceled',
+        "updatedAt" = ${now}
+      WHERE "id" = ${id}
+    `
+  })
+
+  const releasedReservations = await releaseReservationIfPossible(reservationId)
+  const order = await getOrderWithItems(id)
+
+  if (!order) {
+    throw new Error("ORDER_NOT_FOUND")
+  }
+
+  return {
+    order,
+    releasedReservations,
+  }
 }
 
 export async function GET(_request: Request, context: RouteContext) {
@@ -54,7 +224,75 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id } = await context.params
   const body = await request.json().catch(() => null)
+  const action = String(body?.action ?? "")
   const status = String(body?.status ?? "")
+
+  if (action === "mark-paid-test") {
+    try {
+      const result = await markOrderAsPaidForTest(id)
+
+      return NextResponse.json({
+        ...result.order,
+        deductedStock: result.deductedStock,
+        releasedReservations: result.releasedReservations,
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            message: "Pedido nÃ£o encontrado.",
+          },
+          {
+            status: 404,
+          }
+        )
+      }
+
+      return NextResponse.json(
+        {
+          message: error instanceof Error
+            ? error.message
+            : "NÃ£o foi possÃ­vel marcar o pedido como pago.",
+        },
+        {
+          status: 400,
+        }
+      )
+    }
+  }
+
+  if (action === "mark-canceled-test") {
+    try {
+      const result = await markOrderAsCanceled(id)
+
+      return NextResponse.json({
+        ...result.order,
+        releasedReservations: result.releasedReservations,
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            message: "Pedido nÃ£o encontrado.",
+          },
+          {
+            status: 404,
+          }
+        )
+      }
+
+      return NextResponse.json(
+        {
+          message: error instanceof Error
+            ? error.message
+            : "NÃ£o foi possÃ­vel cancelar o pedido.",
+        },
+        {
+          status: 400,
+        }
+      )
+    }
+  }
 
   if (!ALLOWED_ORDER_STATUSES.includes(status)) {
     return NextResponse.json(

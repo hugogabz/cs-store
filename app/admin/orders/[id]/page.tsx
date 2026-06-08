@@ -58,7 +58,7 @@ const statusClasses: Record<string, string> = {
   canceled: "bg-red-50 text-red-600",
   cancelled: "bg-red-50 text-red-600",
   shipped: "bg-blue-50 text-blue-700",
-  delivered: "bg-[#B89535]/15 text-[#8A6800]",
+  delivered: "bg-slate-100 text-emerald-800",
 }
 
 function statusBadgeClass(status: string) {
@@ -152,6 +152,55 @@ export default function AdminOrderDetailsPage() {
         error instanceof Error
           ? error.message
           : "Nao foi possivel atualizar o status."
+      )
+    } finally {
+      setUpdatingStatus(false)
+    }
+  }
+
+  async function runOrderAction({
+    action,
+    successMessage,
+  }: {
+    action: "mark-paid-test" | "mark-canceled-test"
+    successMessage: string
+  }) {
+    setUpdatingStatus(true)
+
+    try {
+      const response = await fetch(`/api/orders/${params.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+        }),
+      })
+
+      if (response.status === 401) {
+        router.push("/admin-login")
+        return
+      }
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Nao foi possivel atualizar o pedido.")
+      }
+
+      await loadOrder()
+      const releasedReservations = Number(data?.releasedReservations ?? 0)
+      toast.success(
+        releasedReservations > 0
+          ? `${successMessage} Reserva liberada.`
+          : successMessage
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel atualizar o pedido."
       )
     } finally {
       setUpdatingStatus(false)
@@ -277,6 +326,40 @@ export default function AdminOrderDetailsPage() {
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={updatingStatus || order.status === "paid"}
+                onClick={() =>
+                  void runOrderAction({
+                    action: "mark-paid-test",
+                    successMessage: "Pedido marcado como pago em modo teste.",
+                  })
+                }
+                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Marcar como pago (teste)
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  updatingStatus ||
+                  order.status === "canceled" ||
+                  order.status === "cancelled"
+                }
+                onClick={() =>
+                  void runOrderAction({
+                    action: "mark-canceled-test",
+                    successMessage: "Pedido marcado como cancelado.",
+                  })
+                }
+                className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Marcar como cancelado
+              </button>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
               {orderStatuses.map((status) => (
                 <button
                   key={status}

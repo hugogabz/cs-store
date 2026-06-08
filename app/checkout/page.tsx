@@ -453,6 +453,7 @@ export default function CheckoutPage() {
           address,
           city,
           state,
+          reservationId: reservation?.reservationId,
           shippingMethod: `${selectedShipping.name} — ${selectedShipping.company}`,
           shippingPrice: selectedShipping.price,
           items: items.map((item) => ({

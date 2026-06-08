@@ -97,6 +97,7 @@ export async function POST(request: Request) {
   const address = normalizeText(body?.address)
   const city = normalizeOptionalText(body?.city)
   const state = normalizeOptionalText(body?.state)
+  const reservationId = normalizeOptionalText(body?.reservationId)
   const shippingMethod = normalizeText(body?.shippingMethod)
   const shippingPrice = normalizePrice(body?.shippingPrice)
 
@@ -164,6 +165,14 @@ export async function POST(request: Request) {
       items: true,
     },
   })
+
+  if (reservationId) {
+    await prisma.$executeRaw`
+      UPDATE "Order"
+      SET "reservationId" = ${reservationId}
+      WHERE "id" = ${order.id}
+    `
+  }
 
   return NextResponse.json({
     orderId: order.id,
