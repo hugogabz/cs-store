@@ -17,6 +17,10 @@ const links = [
     href: "/admin/reservations",
     label: "Reservas",
   },
+  {
+    href: "/admin/reports",
+    label: "Relatorios",
+  },
 ]
 
 export function AdminNav() {
@@ -34,7 +38,7 @@ export function AdminNav() {
 
   return (
     <nav className="flex flex-col gap-3 rounded-2xl border border-[#E7E1D8] bg-white p-3 shadow-[0_12px_34px_rgba(26,26,26,0.04)] sm:flex-row sm:items-center sm:justify-between">
-      <div className="grid grid-cols-3 gap-2 sm:flex">
+      <div className="grid grid-cols-2 gap-2 sm:flex">
         {links.map((link) => {
           const isActive =
             pathname === link.href ||
