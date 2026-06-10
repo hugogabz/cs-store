@@ -52,14 +52,14 @@ export function ProductDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[90] bg-black/45 p-2 pb-24 backdrop-blur-sm md:p-6"
+      className="fixed inset-0 z-[90] bg-black/45 p-3 pb-24 backdrop-blur-sm md:p-6"
       onClick={onClose}
     >
       <div
-        className="mx-auto flex max-h-[calc(100dvh-96px)] max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:max-h-[calc(100dvh-48px)] md:grid md:grid-cols-[0.95fr_1.05fr]"
+        className="mx-auto flex max-h-[calc(100dvh-108px)] max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:max-h-[calc(100dvh-48px)] md:grid md:grid-cols-[0.95fr_1.05fr]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative aspect-square max-h-[42dvh] overflow-hidden rounded-2xl bg-[#F8F6F2] md:max-h-none md:self-center">
+        <div className="relative mx-auto aspect-square w-full max-w-[38dvh] shrink-0 overflow-hidden rounded-2xl bg-[#F8F6F2] md:max-h-none md:max-w-none md:self-center">
           <Image
             src={imageSrc}
             alt={title}
@@ -77,7 +77,7 @@ export function ProductDetailModal({
 
             <button
               onClick={onClose}
-              className="rounded-full border border-[#E7E1D8] p-2 text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#E7E1D8] text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
               aria-label="Fechar detalhes do produto"
             >
               <X size={18} />
@@ -150,7 +150,7 @@ export function ProductDetailModal({
                 description: title,
               })
             }}
-            className="mt-6 rounded-full bg-[#B89535] px-6 py-3.5 font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63] md:mt-8"
+            className="sticky bottom-0 z-10 mt-6 w-full rounded-full bg-[#B89535] px-6 py-3.5 font-semibold text-black shadow-[0_-10px_24px_rgba(255,255,255,0.9)] transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:bg-[#D8D2C8] disabled:text-[#6F6A63] md:static md:mt-8 md:shadow-none"
           >
             {isUnavailable ? "Produto indisponível" : "Adicionar ao carrinho"}
           </button>
