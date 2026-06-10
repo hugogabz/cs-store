@@ -23,6 +23,14 @@ export function Header() {
             CS Store
           </a>
 
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#E7E1D8] text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535] md:hidden"
+            aria-label="Buscar produtos"
+          >
+            <Search size={20} />
+          </button>
+
           <nav className="hidden gap-10 text-sm font-medium md:flex">
             <a href="#cabelos" className="transition hover:text-[#B89535]">
               Cabelos
