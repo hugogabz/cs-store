@@ -23,6 +23,7 @@ export type OrderStatusEmailResult = {
   sent: boolean
   skipped: boolean
   message: string
+  errorMessage?: string
   id?: string
 }
 
@@ -49,6 +50,56 @@ function siteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || "https://www.storecs.com.br")
     .trim()
     .replace(/\/$/, "")
+}
+
+function emailConfig() {
+  return {
+    apiKey: process.env.RESEND_API_KEY?.trim() ?? "",
+    from: process.env.EMAIL_FROM?.trim() ?? "",
+  }
+}
+
+function missingConfigMessage(apiKey: string, from: string) {
+  if (!apiKey && !from) {
+    return "RESEND_API_KEY e EMAIL_FROM não configurados."
+  }
+
+  if (!apiKey) {
+    return "RESEND_API_KEY não configurado."
+  }
+
+  return "EMAIL_FROM não configurado."
+}
+
+function logEmailDiagnostic(
+  message: string,
+  data: {
+    emailFromConfigured: boolean
+    resendApiKeyConfigured: boolean
+    to?: string
+    status?: string
+    error?: unknown
+  }
+) {
+  console.info(`[email] ${message}`, {
+    emailFromConfigured: data.emailFromConfigured,
+    resendApiKeyConfigured: data.resendApiKeyConfigured,
+    to: data.to,
+    status: data.status,
+    error: data.error,
+  })
+}
+
+function resendErrorMessage(error: unknown) {
+  if (!error) return ""
+
+  if (typeof error === "object" && "message" in error) {
+    const message = String((error as { message?: unknown }).message ?? "").trim()
+
+    if (message) return message
+  }
+
+  return JSON.stringify(error)
 }
 
 function buildOrderStatusEmailHtml(order: OrderStatusEmailOrder) {
@@ -133,9 +184,16 @@ function buildOrderStatusEmailHtml(order: OrderStatusEmailOrder) {
 export async function sendOrderStatusEmail(
   order: OrderStatusEmailOrder
 ): Promise<OrderStatusEmailResult> {
-  const apiKey = process.env.RESEND_API_KEY?.trim()
-  const from = process.env.EMAIL_FROM?.trim()
+  const { apiKey, from } = emailConfig()
   const to = order.customerEmail?.trim()
+  const status = order.status === "canceled" ? "cancelled" : order.status
+
+  logEmailDiagnostic("order status email requested", {
+    emailFromConfigured: Boolean(from),
+    resendApiKeyConfigured: Boolean(apiKey),
+    to,
+    status,
+  })
 
   if (!to) {
     return {
@@ -147,18 +205,26 @@ export async function sendOrderStatusEmail(
   }
 
   if (!apiKey || !from) {
+    const message = missingConfigMessage(apiKey, from)
+
+    logEmailDiagnostic("order status email skipped", {
+      emailFromConfigured: Boolean(from),
+      resendApiKeyConfigured: Boolean(apiKey),
+      to,
+      status,
+      error: message,
+    })
+
     return {
       attempted: false,
       sent: false,
       skipped: true,
-      message: "Resend nao configurado.",
+      message,
     }
   }
 
   const resend = new Resend(apiKey)
-  const status = order.status === "canceled" ? "cancelled" : order.status
-  const subject = subjectByStatus[status] ?? `Atualização do pedido - CS Store`
-
+  const subject = subjectByStatus[status] ?? "Atualização do pedido - CS Store"
   const { data, error } = await resend.emails.send(
     {
       from,
@@ -177,19 +243,142 @@ export async function sendOrderStatusEmail(
   )
 
   if (error) {
+    const message = resendErrorMessage(error)
+
+    logEmailDiagnostic("Resend returned an error", {
+      emailFromConfigured: Boolean(from),
+      resendApiKeyConfigured: Boolean(apiKey),
+      to,
+      status,
+      error: message || error,
+    })
+
     return {
       attempted: true,
       sent: false,
       skipped: false,
-      message: "Status atualizado, mas o e-mail nao pôde ser enviado.",
+      message: message
+        ? `Status atualizado, mas o e-mail não pôde ser enviado: ${message}`
+        : "Status atualizado, mas o e-mail não pôde ser enviado.",
+      errorMessage: message,
     }
   }
+
+  logEmailDiagnostic("email sent successfully", {
+    emailFromConfigured: Boolean(from),
+    resendApiKeyConfigured: Boolean(apiKey),
+    to,
+    status,
+  })
 
   return {
     attempted: true,
     sent: true,
     skipped: false,
     message: "E-mail de atualização enviado ao cliente.",
+    id: data?.id,
+  }
+}
+
+export async function sendTestEmail(to: string): Promise<OrderStatusEmailResult> {
+  const { apiKey, from } = emailConfig()
+  const recipient = to.trim()
+  const status = "test"
+
+  logEmailDiagnostic("test email requested", {
+    emailFromConfigured: Boolean(from),
+    resendApiKeyConfigured: Boolean(apiKey),
+    to: recipient,
+    status,
+  })
+
+  if (!recipient) {
+    return {
+      attempted: false,
+      sent: false,
+      skipped: true,
+      message: "Informe um e-mail destinatário.",
+    }
+  }
+
+  if (!apiKey || !from) {
+    const message = missingConfigMessage(apiKey, from)
+
+    logEmailDiagnostic("test email skipped", {
+      emailFromConfigured: Boolean(from),
+      resendApiKeyConfigured: Boolean(apiKey),
+      to: recipient,
+      status,
+      error: message,
+    })
+
+    return {
+      attempted: false,
+      sent: false,
+      skipped: true,
+      message,
+    }
+  }
+
+  const resend = new Resend(apiKey)
+  const { data, error } = await resend.emails.send(
+    {
+      from,
+      to: recipient,
+      subject: "Teste de e-mail - CS Store",
+      html: `
+        <div style="margin: 0; padding: 32px; background: #f8f6f2; font-family: Arial, sans-serif; color: #1a1a1a;">
+          <div style="max-width: 560px; margin: 0 auto; border: 1px solid #e7e1d8; border-radius: 18px; background: #ffffff; padding: 28px;">
+            <div style="color: #b89535; font-size: 12px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;">CS Store</div>
+            <h1 style="margin: 12px 0 0; font-size: 24px;">E-mail de teste enviado com sucesso</h1>
+            <p style="margin: 12px 0 0; color: #6f6a63; line-height: 1.6;">
+              Se você recebeu esta mensagem, a integração com Resend está funcionando.
+            </p>
+          </div>
+        </div>
+      `,
+    },
+    {
+      headers: {
+        "Idempotency-Key": `cs-store-test-email-${recipient}-${Date.now()}`,
+      },
+    }
+  )
+
+  if (error) {
+    const message = resendErrorMessage(error)
+
+    logEmailDiagnostic("Resend returned an error for test email", {
+      emailFromConfigured: Boolean(from),
+      resendApiKeyConfigured: Boolean(apiKey),
+      to: recipient,
+      status,
+      error: message || error,
+    })
+
+    return {
+      attempted: true,
+      sent: false,
+      skipped: false,
+      message: message
+        ? `Não foi possível enviar o e-mail de teste: ${message}`
+        : "Não foi possível enviar o e-mail de teste.",
+      errorMessage: message,
+    }
+  }
+
+  logEmailDiagnostic("test email sent successfully", {
+    emailFromConfigured: Boolean(from),
+    resendApiKeyConfigured: Boolean(apiKey),
+    to: recipient,
+    status,
+  })
+
+  return {
+    attempted: true,
+    sent: true,
+    skipped: false,
+    message: "E-mail de teste enviado com sucesso.",
     id: data?.id,
   }
 }

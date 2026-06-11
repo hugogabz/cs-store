@@ -67,6 +67,8 @@ export default function AdminPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [testEmail, setTestEmail] = useState("")
+  const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   const imagePreviewSrc = localPreview ?? (
     image.trim() ? normalizeProductImageSrc(image) : null
@@ -318,6 +320,48 @@ export default function AdminPage() {
     }
   }
 
+  async function handleSendTestEmail() {
+    if (!testEmail.trim()) {
+      toast.error("Informe um e-mail para teste.")
+      return
+    }
+
+    setSendingTestEmail(true)
+
+    try {
+      const response = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: testEmail,
+        }),
+      })
+
+      if (response.status === 401) {
+        router.push("/admin-login")
+        return
+      }
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Não foi possível enviar o e-mail de teste.")
+      }
+
+      toast.success(data?.message ?? "E-mail de teste enviado com sucesso.")
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar o e-mail de teste."
+      )
+    } finally {
+      setSendingTestEmail(false)
+    }
+  }
+
   const searchText = normalizeSearchText(adminSearch)
 
   const filteredProducts = products.filter((product) => {
@@ -362,6 +406,43 @@ export default function AdminPage() {
         </div>
 
         <AdminNav />
+
+        <section className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
+                Diagnóstico
+              </span>
+
+              <h2 className="mt-2 text-2xl font-semibold text-[#1A1A1A]">
+                Teste de e-mail
+              </h2>
+
+              <p className="mt-2 text-sm text-[#6F6A63]">
+                Envie um e-mail de teste para validar Resend, remetente e domínio.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,280px)_auto]">
+              <input
+                value={testEmail}
+                onChange={(event) => setTestEmail(event.target.value)}
+                type="email"
+                placeholder="email@exemplo.com"
+                className={inputClass}
+              />
+
+              <button
+                type="button"
+                disabled={sendingTestEmail}
+                onClick={() => void handleSendTestEmail()}
+                className="rounded-full bg-[#B89535] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {sendingTestEmail ? "Enviando..." : "Enviar e-mail de teste"}
+              </button>
+            </div>
+          </div>
+        </section>
 
         <section className="rounded-2xl border border-[#E7E1D8] bg-white p-5 shadow-[0_12px_34px_rgba(26,26,26,0.04)] md:p-7">
           <div className="mb-7">

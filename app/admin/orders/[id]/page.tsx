@@ -147,7 +147,7 @@ export default function AdminOrderDetailsPage() {
       if (data?.email?.sent) {
         toast.success("Status atualizado e e-mail enviado ao cliente.")
       } else if (data?.email?.attempted && !data?.email?.sent) {
-        toast.warning("Status atualizado, mas não foi possível enviar o e-mail.")
+        toast.warning(data.email.message ?? "Status atualizado, mas não foi possível enviar o e-mail.")
       } else {
         toast.success("Pedido atualizado.")
       }
@@ -202,7 +202,7 @@ export default function AdminOrderDetailsPage() {
       if (data?.email?.sent) {
         toast.success(`${orderMessage} Status atualizado e e-mail enviado ao cliente.`)
       } else if (data?.email?.attempted && !data?.email?.sent) {
-        toast.warning(`${orderMessage} Status atualizado, mas não foi possível enviar o e-mail.`)
+        toast.warning(`${orderMessage} ${data.email.message ?? "Status atualizado, mas não foi possível enviar o e-mail."}`)
       } else {
         toast.success(orderMessage)
       }

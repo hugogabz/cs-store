@@ -182,11 +182,14 @@ export async function POST(request: Request) {
     `
   }
 
-  const email = await sendOrderStatusEmail(order).catch(() => ({
+  const email = await sendOrderStatusEmail(order).catch((error) => ({
     attempted: true,
     sent: false,
     skipped: false,
-    message: "Pedido criado, mas o e-mail nao pode ser enviado.",
+    message: error instanceof Error
+      ? `Pedido criado, mas o e-mail nao pode ser enviado: ${error.message}`
+      : "Pedido criado, mas o e-mail nao pode ser enviado.",
+    errorMessage: error instanceof Error ? error.message : undefined,
   }))
 
   return NextResponse.json({

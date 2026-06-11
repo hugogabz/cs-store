@@ -202,11 +202,14 @@ async function sendOrderEmailIfStatusChanged({
     }
   }
 
-  return sendOrderStatusEmail(order).catch(() => ({
+  return sendOrderStatusEmail(order).catch((error) => ({
     attempted: true,
     sent: false,
     skipped: false,
-    message: "Status atualizado, mas o e-mail nao pode ser enviado.",
+    message: error instanceof Error
+      ? `Status atualizado, mas o e-mail nao pode ser enviado: ${error.message}`
+      : "Status atualizado, mas o e-mail nao pode ser enviado.",
+    errorMessage: error instanceof Error ? error.message : undefined,
   }))
 }
 
