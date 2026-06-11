@@ -40,6 +40,15 @@ type ShippingOption = {
   deliveryTime: number
 }
 
+type ViaCepAddress = {
+  cep?: string
+  logradouro?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+  erro?: boolean
+}
+
 type PersistedCheckoutState = {
   reservation: ReservationState
   reservationItems: ReservationItem[]
@@ -83,6 +92,22 @@ function getReservationItems(
       productId: item.productId,
       quantity: Math.max(1, item.quantity),
     }))
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "")
+}
+
+function formatCep(value: string) {
+  const digits = onlyDigits(value).slice(0, 8)
+
+  if (digits.length <= 5) return digits
+
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`
+}
+
+function normalizeUf(value: string) {
+  return value.trim().toUpperCase().slice(0, 2)
 }
 
 function isReservationActive(reservation: ReservationState) {
@@ -135,6 +160,9 @@ export default function CheckoutPage() {
   const [cepDestino, setCepDestino] = useState("")
   const [city, setCity] = useState("")
   const [address, setAddress] = useState("")
+  const [district, setDistrict] = useState("")
+  const [addressNumber, setAddressNumber] = useState("")
+  const [addressComplement, setAddressComplement] = useState("")
   const [state, setState] = useState("")
   const [calculatingShipping, setCalculatingShipping] = useState(false)
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
@@ -410,6 +438,70 @@ export default function CheckoutPage() {
     return nextReservation
   }
 
+  async function fetchAddressByCep(cep: string) {
+    const cepDigits = onlyDigits(cep)
+
+    if (cepDigits.length !== 8) {
+      throw new Error("Informe um CEP válido com 8 dígitos.")
+    }
+
+    const response = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
+      .catch(() => null)
+
+    if (!response) {
+      throw new Error("CEP não encontrado. Confira o número digitado.")
+    }
+
+    const data = (await response.json().catch(() => null)) as ViaCepAddress | null
+
+    if (!response.ok || !data || data.erro) {
+      throw new Error("CEP não encontrado. Confira o número digitado.")
+    }
+
+    return data
+  }
+
+  function applyAddressFromCep(addressData: ViaCepAddress) {
+    setCepDestino(formatCep(addressData.cep ?? cepDestino))
+    setCity(addressData.localidade ?? "")
+    setState(normalizeUf(addressData.uf ?? ""))
+
+    if (addressData.logradouro) {
+      setAddress(addressData.logradouro)
+    }
+
+    if (addressData.bairro) {
+      setDistrict(addressData.bairro)
+    }
+  }
+
+  function checkoutValidationMessage() {
+    if (!customerName.trim()) return "Informe o nome completo."
+    if (!customerEmail.trim()) return "Informe o e-mail."
+    if (!customerPhone.trim()) return "Informe o telefone."
+    if (onlyDigits(cepDestino).length !== 8) return "Informe um CEP válido com 8 dígitos."
+    if (!city.trim()) return "Informe a cidade."
+    if (normalizeUf(state).length !== 2) return "Informe a UF do estado com 2 letras."
+    if (!district.trim()) return "Informe o bairro."
+    if (!address.trim()) return "Informe a rua/logradouro."
+    if (!addressNumber.trim()) return "Informe o número do endereço."
+
+    return ""
+  }
+
+  function fullDeliveryAddress() {
+    return [
+      address.trim(),
+      `nº ${addressNumber.trim()}`,
+      district.trim(),
+      addressComplement.trim()
+        ? `Complemento: ${addressComplement.trim()}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(", ")
+  }
+
   async function handleCreatePendingOrder() {
     if (items.length === 0) {
       toast.error("Carrinho vazio. Adicione produtos antes de continuar.")
@@ -421,8 +513,10 @@ export default function CheckoutPage() {
       return null
     }
 
-    if (!customerName || !customerEmail || !customerPhone || !cepDestino || !address) {
-      toast.error("Preencha nome, e-mail, telefone, CEP e endereço.")
+    const validationMessage = checkoutValidationMessage()
+
+    if (validationMessage) {
+      toast.error(validationMessage)
       return null
     }
 
@@ -449,10 +543,10 @@ export default function CheckoutPage() {
           customerEmail,
           customerPhone,
           customerCpf,
-          cep: cepDestino,
-          address,
+          cep: onlyDigits(cepDestino),
+          address: fullDeliveryAddress(),
           city,
-          state,
+          state: normalizeUf(state),
           reservationId: activeReservation.reservationId,
           shippingMethod: `${selectedShipping.name} — ${selectedShipping.company}`,
           shippingPrice: selectedShipping.price,
@@ -532,8 +626,10 @@ export default function CheckoutPage() {
       return
     }
 
-    if (!cepDestino.trim()) {
-      toast.error("Informe o CEP de entrega.")
+    const cepDigits = onlyDigits(cepDestino)
+
+    if (cepDigits.length !== 8) {
+      toast.error("Informe um CEP válido com 8 dígitos.")
       return
     }
 
@@ -547,13 +643,16 @@ export default function CheckoutPage() {
     setCalculatingShipping(true)
 
     try {
+      const addressData = await fetchAddressByCep(cepDigits)
+      applyAddressFromCep(addressData)
+
       const response = await fetch("/api/shipping/calculate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          cepDestino,
+          cepDestino: cepDigits,
           items: items.map((item) => ({
             productId: item.productId,
             quantity: Math.max(1, item.quantity),
@@ -710,7 +809,11 @@ export default function CheckoutPage() {
                   <div className="flex flex-col gap-3 sm:flex-row md:col-span-2">
                     <input
                       value={cepDestino}
-                      onChange={(event) => setCepDestino(event.target.value)}
+                      onChange={(event) => {
+                        setCepDestino(formatCep(event.target.value))
+                        setShippingOptions([])
+                        setSelectedShipping(null)
+                      }}
                       placeholder="CEP"
                       inputMode="numeric"
                       className={`${inputClass} min-w-0 flex-1`}
@@ -734,18 +837,35 @@ export default function CheckoutPage() {
                   />
                   <input
                     value={state}
-                    onChange={(event) => setState(event.target.value)}
-                    placeholder="Estado"
+                    onChange={(event) => setState(normalizeUf(event.target.value))}
+                    placeholder="UF"
+                    maxLength={2}
                     className={inputClass}
                   />
                   <input
                     value={address}
                     onChange={(event) => setAddress(event.target.value)}
-                    placeholder="Endereço"
-                    className={`${inputClass} md:col-span-2`}
+                    placeholder="Rua / Logradouro"
+                    className={inputClass}
                   />
-                  <input placeholder="Número" className={inputClass} />
-                  <input placeholder="Complemento" className={inputClass} />
+                  <input
+                    value={district}
+                    onChange={(event) => setDistrict(event.target.value)}
+                    placeholder="Bairro"
+                    className={inputClass}
+                  />
+                  <input
+                    value={addressNumber}
+                    onChange={(event) => setAddressNumber(event.target.value)}
+                    placeholder="Número"
+                    className={inputClass}
+                  />
+                  <input
+                    value={addressComplement}
+                    onChange={(event) => setAddressComplement(event.target.value)}
+                    placeholder="Complemento"
+                    className={inputClass}
+                  />
                 </div>
 
                 {shippingOptions.length > 0 && (
