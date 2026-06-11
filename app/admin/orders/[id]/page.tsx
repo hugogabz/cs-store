@@ -145,9 +145,9 @@ export default function AdminOrderDetailsPage() {
 
       await loadOrder()
       if (data?.email?.sent) {
-        toast.success("E-mail de atualização enviado ao cliente.")
+        toast.success("Status atualizado e e-mail enviado ao cliente.")
       } else if (data?.email?.attempted && !data?.email?.sent) {
-        toast.warning("Status atualizado, mas o e-mail não pôde ser enviado.")
+        toast.warning("Status atualizado, mas não foi possível enviar o e-mail.")
       } else {
         toast.success("Pedido atualizado.")
       }
@@ -200,9 +200,9 @@ export default function AdminOrderDetailsPage() {
         : successMessage
 
       if (data?.email?.sent) {
-        toast.success(`${orderMessage} E-mail de atualização enviado ao cliente.`)
+        toast.success(`${orderMessage} Status atualizado e e-mail enviado ao cliente.`)
       } else if (data?.email?.attempted && !data?.email?.sent) {
-        toast.warning(`${orderMessage} Status atualizado, mas o e-mail não pôde ser enviado.`)
+        toast.warning(`${orderMessage} Status atualizado, mas não foi possível enviar o e-mail.`)
       } else {
         toast.success(orderMessage)
       }
