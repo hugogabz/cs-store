@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
 import { getPrisma } from "@/backend/services/prisma"
 import { releaseStockReservationGroup } from "@/backend/services/stock-reservations"
+import { sendOrderStatusEmail } from "@/shared/email"
 import { isAllowedOrderStatus, normalizeOrderStatus } from "@/shared/utils/order-status"
 
 type RouteContext = {
@@ -23,6 +24,30 @@ function normalizeText(value: unknown) {
 
 function createManualTestPaymentId(orderId: string) {
   return `manual-test-${orderId.slice(-8)}-${Date.now()}`
+}
+
+async function sendOrderEmailIfStatusChanged({
+  order,
+  statusChanged,
+}: {
+  order: NonNullable<Awaited<ReturnType<typeof getOrderWithItems>>>
+  statusChanged: boolean
+}) {
+  if (!statusChanged) {
+    return {
+      attempted: false,
+      sent: false,
+      skipped: true,
+      message: "Status sem alteração. E-mail não enviado.",
+    }
+  }
+
+  return sendOrderStatusEmail(order).catch(() => ({
+    attempted: true,
+    sent: false,
+    skipped: false,
+    message: "Status atualizado, mas o e-mail nao pode ser enviado.",
+  }))
 }
 
 async function releaseReservationIfPossible(reservationId: string | null) {
@@ -138,6 +163,7 @@ async function markOrderAsPaidForTest(id: string) {
 
     return {
       deductedStock: shouldDeductStock,
+      statusChanged: order.status !== "paid",
     }
   })
 
@@ -152,12 +178,15 @@ async function markOrderAsPaidForTest(id: string) {
     order,
     deductedStock: result.deductedStock,
     releasedReservations,
+    statusChanged: result.statusChanged,
   }
 }
 
 async function markOrderAsCanceled(id: string) {
   const prisma = getPrisma()
   let reservationId: string | null = null
+
+  let statusChanged = false
 
   await prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<OrderControlRow[]>`
@@ -174,6 +203,7 @@ async function markOrderAsCanceled(id: string) {
     }
 
     reservationId = order.reservationId
+    statusChanged = order.status !== "cancelled"
     const now = new Date()
 
     await tx.$executeRaw`
@@ -184,13 +214,15 @@ async function markOrderAsCanceled(id: string) {
       WHERE "id" = ${id}
     `
 
-    await tx.orderStatusHistory.create({
-      data: {
-        orderId: id,
-        status: "cancelled",
-        trackingCode: order.trackingCode,
-      },
-    })
+    if (statusChanged) {
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          status: "cancelled",
+          trackingCode: order.trackingCode,
+        },
+      })
+    }
   })
 
   const releasedReservations = await releaseReservationIfPossible(reservationId)
@@ -203,6 +235,7 @@ async function markOrderAsCanceled(id: string) {
   return {
     order,
     releasedReservations,
+    statusChanged,
   }
 }
 
@@ -255,11 +288,16 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (action === "mark-paid-test") {
     try {
       const result = await markOrderAsPaidForTest(id)
+      const email = await sendOrderEmailIfStatusChanged({
+        order: result.order,
+        statusChanged: result.statusChanged,
+      })
 
       return NextResponse.json({
         ...result.order,
         deductedStock: result.deductedStock,
         releasedReservations: result.releasedReservations,
+        email,
       })
     } catch (error) {
       if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
@@ -289,10 +327,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (action === "mark-canceled-test") {
     try {
       const result = await markOrderAsCanceled(id)
+      const email = await sendOrderEmailIfStatusChanged({
+        order: result.order,
+        statusChanged: result.statusChanged,
+      })
 
       return NextResponse.json({
         ...result.order,
         releasedReservations: result.releasedReservations,
+        email,
       })
     } catch (error) {
       if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
@@ -331,7 +374,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const prisma = getPrisma()
-  const order = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const existingOrder = await tx.order.findUnique({
       where: {
         id,
@@ -381,10 +424,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       })
     }
 
-    return updatedOrder
+    return {
+      order: updatedOrder,
+      statusChanged: existingOrder.status !== status,
+    }
   }).catch(() => null)
 
-  if (!order) {
+  if (!result?.order) {
     return NextResponse.json(
       {
         message: "Pedido não encontrado.",
@@ -395,5 +441,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     )
   }
 
-  return NextResponse.json(order)
+  const email = await sendOrderEmailIfStatusChanged({
+    order: result.order,
+    statusChanged: result.statusChanged,
+  })
+
+  return NextResponse.json({
+    ...result.order,
+    email,
+  })
 }

@@ -141,8 +141,16 @@ export default function AdminOrderDetailsPage() {
         throw new Error("Nao foi possivel atualizar o status.")
       }
 
+      const data = await response.json().catch(() => null)
+
       await loadOrder()
-      toast.success("Pedido atualizado.")
+      if (data?.email?.sent) {
+        toast.success("E-mail de atualização enviado ao cliente.")
+      } else if (data?.email?.attempted && !data?.email?.sent) {
+        toast.warning("Status atualizado, mas o e-mail não pôde ser enviado.")
+      } else {
+        toast.success("Pedido atualizado.")
+      }
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -187,11 +195,17 @@ export default function AdminOrderDetailsPage() {
 
       await loadOrder()
       const releasedReservations = Number(data?.releasedReservations ?? 0)
-      toast.success(
-        releasedReservations > 0
-          ? `${successMessage} Reserva liberada.`
-          : successMessage
-      )
+      const orderMessage = releasedReservations > 0
+        ? `${successMessage} Reserva liberada.`
+        : successMessage
+
+      if (data?.email?.sent) {
+        toast.success(`${orderMessage} E-mail de atualização enviado ao cliente.`)
+      } else if (data?.email?.attempted && !data?.email?.sent) {
+        toast.warning(`${orderMessage} Status atualizado, mas o e-mail não pôde ser enviado.`)
+      } else {
+        toast.success(orderMessage)
+      }
     } catch (error) {
       toast.error(
         error instanceof Error

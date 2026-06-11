@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import type { Prisma, PrismaClient } from "@prisma/client"
 import { getPrisma } from "@/backend/services/prisma"
 import { releaseStockReservationGroup } from "@/backend/services/stock-reservations"
+import { sendOrderStatusEmail } from "@/shared/email"
 import { normalizeOrderStatus } from "@/shared/utils/order-status"
 
 type InfinitePayCheckResponse = {
@@ -161,6 +162,54 @@ async function getOrderControl(
   return rows[0] ?? null
 }
 
+async function getOrderWithItems(id: string) {
+  const prisma = getPrisma()
+
+  return prisma.order.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      items: true,
+    },
+  })
+}
+
+async function sendOrderEmailIfStatusChanged({
+  orderId,
+  statusChanged,
+}: {
+  orderId: string
+  statusChanged: boolean
+}) {
+  if (!statusChanged) {
+    return {
+      attempted: false,
+      sent: false,
+      skipped: true,
+      message: "Status sem alteração. E-mail não enviado.",
+    }
+  }
+
+  const order = await getOrderWithItems(orderId)
+
+  if (!order) {
+    return {
+      attempted: false,
+      sent: false,
+      skipped: true,
+      message: "Pedido não encontrado para envio de e-mail.",
+    }
+  }
+
+  return sendOrderStatusEmail(order).catch(() => ({
+    attempted: true,
+    sent: false,
+    skipped: false,
+    message: "Status atualizado, mas o e-mail nao pode ser enviado.",
+  }))
+}
+
 async function markOrderAsPaidFromInfinitePay({
   orderId,
   paymentId,
@@ -265,6 +314,7 @@ async function markOrderAsPaidFromInfinitePay({
 
     return {
       deductedStock: shouldDeductStock,
+      statusChanged: order.status !== nextStatus,
     }
   })
 
@@ -284,6 +334,7 @@ async function markOrderAsPaidFromInfinitePay({
     order,
     deductedStock: result.deductedStock,
     releasedReservations,
+    statusChanged: result.statusChanged,
   }
 }
 
@@ -302,6 +353,15 @@ async function updateOrderAsPendingOrFailed({
 }) {
   const prisma = getPrisma()
   const now = new Date()
+  const existingOrder = await getOrderControl(orderId)
+  const normalizedCurrentStatus = existingOrder
+    ? normalizeOrderStatus(existingOrder.status)
+    : ""
+  const statusChanged = Boolean(
+    existingOrder &&
+    normalizedCurrentStatus !== status &&
+    normalizedCurrentStatus !== "paid"
+  )
 
   await prisma.$executeRaw`
     UPDATE "Order"
@@ -317,7 +377,7 @@ async function updateOrderAsPendingOrFailed({
 
   const updatedOrder = await getOrderControl(orderId)
 
-  if (updatedOrder && normalizeOrderStatus(updatedOrder.status) === status) {
+  if (updatedOrder && statusChanged) {
     await prisma.orderStatusHistory.create({
       data: {
         orderId,
@@ -326,7 +386,15 @@ async function updateOrderAsPendingOrFailed({
     })
   }
 
-  return updatedOrder
+  const email = await sendOrderEmailIfStatusChanged({
+    orderId,
+    statusChanged,
+  })
+
+  return {
+    order: updatedOrder,
+    email,
+  }
 }
 
 export async function POST(request: Request) {
@@ -440,6 +508,10 @@ export async function POST(request: Request) {
         receiptUrl,
         captureMethod,
       })
+      const email = await sendOrderEmailIfStatusChanged({
+        orderId,
+        statusChanged: result.statusChanged,
+      })
 
       return NextResponse.json({
         status: result.order?.status ?? "paid",
@@ -447,6 +519,7 @@ export async function POST(request: Request) {
         payment,
         deductedStock: result.deductedStock,
         releasedReservations: result.releasedReservations,
+        email,
       })
     } catch (error) {
       return NextResponse.json(
@@ -464,7 +537,7 @@ export async function POST(request: Request) {
   }
 
   const nextStatus = status === "cancelled" ? "cancelled" : "pending"
-  const updatedOrder = await updateOrderAsPendingOrFailed({
+  const result = await updateOrderAsPendingOrFailed({
     orderId,
     status: nextStatus,
     paymentId: returnedPaymentId,
@@ -473,9 +546,10 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json({
-    status: updatedOrder?.status ?? status,
+    status: result.order?.status ?? status,
     orderId,
     payment,
     deductedStock: false,
+    email: result.email,
   })
 }

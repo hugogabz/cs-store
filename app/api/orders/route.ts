@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
 import { getPrisma } from "@/backend/services/prisma"
+import { sendOrderStatusEmail } from "@/shared/email"
 
 type OrderRequestItem = {
   productId?: unknown
@@ -181,8 +182,16 @@ export async function POST(request: Request) {
     `
   }
 
+  const email = await sendOrderStatusEmail(order).catch(() => ({
+    attempted: true,
+    sent: false,
+    skipped: false,
+    message: "Pedido criado, mas o e-mail nao pode ser enviado.",
+  }))
+
   return NextResponse.json({
     orderId: order.id,
     order,
+    email,
   })
 }
