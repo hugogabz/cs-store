@@ -49,6 +49,14 @@ type ViaCepAddress = {
   erro?: boolean
 }
 
+type BrasilApiCepAddress = {
+  cep?: string
+  state?: string
+  city?: string
+  neighborhood?: string
+  street?: string
+}
+
 type PersistedCheckoutState = {
   reservation: ReservationState
   reservationItems: ReservationItem[]
@@ -108,6 +116,42 @@ function formatCep(value: string) {
 
 function normalizeUf(value: string) {
   return value.trim().toUpperCase().slice(0, 2)
+}
+
+function isViaCepAddress(
+  addressData: ViaCepAddress | BrasilApiCepAddress
+): addressData is ViaCepAddress {
+  return "localidade" in addressData || "logradouro" in addressData || "uf" in addressData
+}
+
+function normalizeCepAddress(addressData: ViaCepAddress | BrasilApiCepAddress) {
+  if (isViaCepAddress(addressData)) {
+    return {
+      cep: addressData.cep,
+      street: addressData.logradouro ?? "",
+      district: addressData.bairro ?? "",
+      city: addressData.localidade ?? "",
+      state: addressData.uf ?? "",
+    }
+  }
+
+  return {
+    cep: addressData.cep,
+    street: addressData.street ?? "",
+    district: addressData.neighborhood ?? "",
+    city: addressData.city ?? "",
+    state: addressData.state ?? "",
+  }
+}
+
+function friendlyCheckoutError(error: unknown, fallbackMessage: string) {
+  const message = error instanceof Error ? error.message : fallbackMessage
+
+  if (message.toLowerCase().includes("the given data was invalid")) {
+    return "CEP inválido."
+  }
+
+  return message
 }
 
 function isReservationActive(reservation: ReservationState) {
@@ -442,58 +486,67 @@ export default function CheckoutPage() {
     const cepDigits = onlyDigits(cep)
 
     if (cepDigits.length !== 8) {
-      throw new Error("Informe um CEP válido com 8 dígitos.")
+      throw new Error("CEP inválido.")
     }
 
-    const response = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
+    const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
       .catch(() => null)
 
-    if (!response) {
-      throw new Error("CEP não encontrado. Confira o número digitado.")
+    if (viaCepResponse?.ok) {
+      const viaCepData = (await viaCepResponse.json().catch(() => null)) as
+        | ViaCepAddress
+        | null
+
+      if (viaCepData?.cep && viaCepData.localidade && viaCepData.uf && !viaCepData.erro) {
+        return viaCepData
+      }
     }
 
-    const data = (await response.json().catch(() => null)) as ViaCepAddress | null
+    const brasilApiResponse = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepDigits}`)
+      .catch(() => null)
 
-    if (!response.ok || !data || data.erro) {
-      throw new Error("CEP não encontrado. Confira o número digitado.")
+    if (brasilApiResponse?.ok) {
+      const brasilApiData = (await brasilApiResponse.json().catch(() => null)) as
+        | BrasilApiCepAddress
+        | null
+
+      if (brasilApiData?.cep && brasilApiData.city && brasilApiData.state) {
+        return brasilApiData
+      }
     }
 
-    return data
+    throw new Error("CEP não encontrado.")
   }
 
-  function applyAddressFromCep(addressData: ViaCepAddress) {
-    setCepDestino(formatCep(addressData.cep ?? cepDestino))
-    setCity(addressData.localidade ?? "")
-    setState(normalizeUf(addressData.uf ?? ""))
+  function applyAddressFromCep(addressData: ViaCepAddress | BrasilApiCepAddress) {
+    const normalizedAddress = normalizeCepAddress(addressData)
 
-    if (addressData.logradouro) {
-      setAddress(addressData.logradouro)
-    }
+    setCepDestino(formatCep(normalizedAddress.cep ?? cepDestino))
+    setCity(normalizedAddress.city)
+    setState(normalizeUf(normalizedAddress.state))
+    setAddress(normalizedAddress.street)
+    setDistrict(normalizedAddress.district)
 
-    if (addressData.bairro) {
-      setDistrict(addressData.bairro)
-    }
+    return normalizedAddress
   }
 
   function checkoutValidationMessage() {
     if (!customerName.trim()) return "Informe o nome completo."
     if (!customerEmail.trim()) return "Informe o e-mail."
     if (!customerPhone.trim()) return "Informe o telefone."
-    if (onlyDigits(cepDestino).length !== 8) return "Informe um CEP válido com 8 dígitos."
+    if (onlyDigits(cepDestino).length !== 8) return "CEP inválido."
     if (!city.trim()) return "Informe a cidade."
     if (normalizeUf(state).length !== 2) return "Informe a UF do estado com 2 letras."
-    if (!district.trim()) return "Informe o bairro."
-    if (!address.trim()) return "Informe a rua/logradouro."
-    if (!addressNumber.trim()) return "Informe o número do endereço."
+    if (!addressNumber.trim()) return "Informe o número da residência."
 
     return ""
   }
 
   function fullDeliveryAddress() {
     return [
-      address.trim(),
+      address.trim() || "Rua não informada pelo CEP",
       `nº ${addressNumber.trim()}`,
-      district.trim(),
+      district.trim() || "Bairro não informado pelo CEP",
       addressComplement.trim()
         ? `Complemento: ${addressComplement.trim()}`
         : "",
@@ -509,7 +562,7 @@ export default function CheckoutPage() {
     }
 
     if (!selectedShipping) {
-      toast.error("Calcule e selecione uma opção de frete antes de continuar.")
+      toast.error("Selecione uma opção de frete.")
       return null
     }
 
@@ -573,9 +626,7 @@ export default function CheckoutPage() {
       return data.orderId as string
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível criar o pedido."
+        friendlyCheckoutError(error, "Não foi possível criar o pedido.")
       )
       return null
     } finally {
@@ -611,9 +662,7 @@ export default function CheckoutPage() {
       window.location.href = data.paymentUrl
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível iniciar o pagamento."
+        friendlyCheckoutError(error, "Não foi possível iniciar o pagamento.")
       )
     } finally {
       setCreatingOrder(false)
@@ -629,7 +678,7 @@ export default function CheckoutPage() {
     const cepDigits = onlyDigits(cepDestino)
 
     if (cepDigits.length !== 8) {
-      toast.error("Informe um CEP válido com 8 dígitos.")
+      toast.error("CEP inválido.")
       return
     }
 
@@ -671,9 +720,7 @@ export default function CheckoutPage() {
       toast.success("Frete calculado com sucesso.")
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível calcular o frete."
+        friendlyCheckoutError(error, "Não foi possível calcular o frete.")
       )
     } finally {
       setCalculatingShipping(false)
