@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
+import { generateUniqueProductSlug } from "@/backend/services/product-slugs"
 import { getPrisma } from "@/backend/services/prisma"
 import { toNumberPrice } from "@/shared/utils/currency"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
@@ -43,6 +44,7 @@ export async function PUT(
   const prisma = getPrisma()
   const { id } = await context.params
   const body = await request.json()
+  const slug = await generateUniqueProductSlug(prisma, body.title, id)
 
   const product = await prisma.product.update({
     where: {
@@ -50,6 +52,7 @@ export async function PUT(
     },
     data: {
       title: body.title,
+      slug,
       description: body.description?.trim() || null,
       category: body.category,
       subcategory: body.subcategory?.trim() || null,

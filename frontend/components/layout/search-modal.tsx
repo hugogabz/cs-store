@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Search, ShoppingBag, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -13,6 +14,7 @@ import { normalizeSearchText } from "@/shared/utils/search"
 type Product = {
   id: string
   title: string
+  slug: string | null
   description: string | null
   category: string
   subcategory: string | null
@@ -138,24 +140,31 @@ export function SearchModal({
               product.category,
               product.subcategory
             )
+            const productHref = `/produto/${product.slug ?? product.id}`
 
             return (
               <div
                 key={product.id}
                 className="flex gap-3 rounded-2xl border border-transparent p-2 transition hover:border-[#E7E1D8] hover:bg-[#F8F6F2] md:items-center md:gap-4 md:p-3"
               >
-                <Image
-                  src={imageSrc}
-                  alt={product.title}
-                  width={72}
-                  height={72}
-                  className="h-16 w-16 shrink-0 rounded-xl object-cover md:h-[72px] md:w-[72px]"
-                />
+                <Link href={productHref} onClick={onClose} className="shrink-0">
+                  <Image
+                    src={imageSrc}
+                    alt={product.title}
+                    width={72}
+                    height={72}
+                    className="h-16 w-16 rounded-xl object-cover md:h-[72px] md:w-[72px]"
+                  />
+                </Link>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="line-clamp-2 font-semibold text-[#1A1A1A]">
+                  <Link
+                    href={productHref}
+                    onClick={onClose}
+                    className="line-clamp-2 font-semibold text-[#1A1A1A] transition hover:text-[#B89535]"
+                  >
                     {product.title}
-                  </h3>
+                  </Link>
 
                   <p className="mt-1 text-sm text-[#B89535]">
                     {subcategoryLabel

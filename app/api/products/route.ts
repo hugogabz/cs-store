@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
+import { generateUniqueProductSlug } from "@/backend/services/product-slugs"
 import { getPrisma } from "@/backend/services/prisma"
 import { getProducts } from "@/backend/services/products"
 import { toNumberPrice } from "@/shared/utils/currency"
@@ -45,10 +46,12 @@ export async function POST(request: Request) {
 
   const prisma = getPrisma()
   const body = await request.json()
+  const slug = await generateUniqueProductSlug(prisma, body.title)
 
   const product = await prisma.product.create({
     data: {
       title: body.title,
+      slug,
       description: body.description?.trim() || null,
       category: body.category,
       subcategory: body.subcategory?.trim() || null,

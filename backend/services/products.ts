@@ -8,6 +8,7 @@ import { normalizeProductImageSrc } from "@/shared/utils/images"
 export type Product = {
   id: string
   title: string
+  slug: string | null
   description: string | null
   category: string
   subcategory: string | null
@@ -60,4 +61,45 @@ export async function getProducts(): Promise<Product[]> {
       }),
     }
   })
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const prisma = getPrisma()
+  const now = new Date()
+
+  await releaseExpiredStockReservations(now)
+
+  const product = await prisma.product.findUnique({
+    where: {
+      slug,
+    },
+    include: {
+      reservations: {
+        where: {
+          expiresAt: {
+            gt: now,
+          },
+        },
+      },
+    },
+  })
+
+  if (!product) {
+    return null
+  }
+
+  const { reservations, ...productData } = product
+  const reservedQuantity = reservations.reduce(
+    (acc, reservation) => acc + Math.max(0, reservation.quantity),
+    0
+  )
+
+  return {
+    ...productData,
+    image: normalizeProductImageSrc(productData.image),
+    stock: getAvailableStock({
+      stock: productData.stock,
+      reservedQuantity,
+    }),
+  }
 }

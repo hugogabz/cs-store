@@ -9,6 +9,7 @@ import { isSameSubcategory } from "@/shared/utils/categories"
 type Product = {
   id?: string
   title: string
+  slug?: string | null
   description?: string | null
   category: string
   subcategory?: string | null

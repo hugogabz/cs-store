@@ -17,6 +17,7 @@ import { normalizeSearchText } from "@/shared/utils/search"
 type Product = {
   id: string
   title: string
+  slug: string | null
   description: string | null
   category: string
   subcategory: string | null
@@ -322,6 +323,7 @@ export default function AdminPage() {
   const filteredProducts = products.filter((product) => {
     const productText = normalizeSearchText(`
       ${product.title}
+      ${product.slug ?? ""}
       ${product.description ?? ""}
       ${product.category}
       ${product.subcategory ?? ""}
@@ -699,6 +701,12 @@ export default function AdminPage() {
                     {product.description && (
                       <p className="mt-1 line-clamp-1 text-sm text-[#6F6A63]">
                         {product.description}
+                      </p>
+                    )}
+
+                    {product.slug && (
+                      <p className="mt-1 text-xs text-[#8A8278]">
+                        URL: /produto/{product.slug}
                       </p>
                     )}
 

@@ -1,8 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useState } from "react"
-import { ProductDetailModal } from "@/frontend/components/products/product-detail-modal"
+import Link from "next/link"
 import { useCartStore } from "@/frontend/store/cart-store"
 import { getProductSubcategoryLabel } from "@/shared/utils/categories"
 import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
@@ -12,6 +11,7 @@ import { toast } from "sonner"
 type ProductCardProps = {
   id?: string
   title: string
+  slug?: string | null
   description?: string | null
   category: string
   subcategory?: string | null
@@ -25,16 +25,13 @@ type ProductCardProps = {
 export function ProductCard({
   id,
   title,
-  description,
+  slug,
   category,
   subcategory,
   price,
   image,
   stock = 0,
-  rating = 4.8,
-  ratingCount = 0,
 }: ProductCardProps) {
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
   const addItem = useCartStore((state) => state.addItem)
   const imageSrc = normalizeProductImageSrc(image)
   const numericPrice = toNumberPrice(price)
@@ -47,10 +44,15 @@ export function ProductCard({
       ? "Últimas unidades"
       : "Em estoque"
 
+  const productHref = `/produto/${slug ?? id ?? ""}`
+
   return (
-    <>
-      <div className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white shadow-[0_10px_30px_rgba(26,26,26,0.04)] transition duration-300 hover:border-[#D8CBB9] hover:shadow-[0_14px_34px_rgba(26,26,26,0.07)]">
-        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F8F6F2]">
+    <div className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white shadow-[0_10px_30px_rgba(26,26,26,0.04)] transition duration-300 hover:border-[#D8CBB9] hover:shadow-[0_14px_34px_rgba(26,26,26,0.07)]">
+        <Link
+          href={productHref}
+          className="relative aspect-square overflow-hidden rounded-2xl bg-[#F8F6F2]"
+          aria-label={`Ver detalhes de ${title}`}
+        >
           <Image
             src={imageSrc}
             alt={title}
@@ -58,16 +60,19 @@ export function ProductCard({
             sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 44vw"
             className="object-contain p-3 transition duration-500 group-hover:scale-[1.01] md:p-4"
           />
-        </div>
+        </Link>
 
         <div className="flex flex-1 flex-col p-4 md:p-5">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B89535]">
             {subcategoryLabel ? `${category} / ${subcategoryLabel}` : category}
           </span>
 
-          <h3 className="mt-2.5 line-clamp-2 min-h-12 text-base font-semibold leading-tight text-[#1A1A1A] md:text-lg">
+          <Link
+            href={productHref}
+            className="mt-2.5 line-clamp-2 min-h-12 text-base font-semibold leading-tight text-[#1A1A1A] transition hover:text-[#B89535] md:text-lg"
+          >
             {title}
-          </h3>
+          </Link>
 
           <div className="mt-auto pt-5">
             <p className="text-base font-semibold tracking-tight text-[#1A1A1A] md:text-lg">
@@ -110,31 +115,14 @@ export function ProductCard({
               {isUnavailable ? "Indisponível" : "Comprar"}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsDetailOpen(true)}
-              className="mt-2 w-full py-1.5 text-sm font-semibold text-[#6F6A63] transition hover:text-[#B89535]"
+            <Link
+              href={productHref}
+              className="mt-2 block w-full py-1.5 text-center text-sm font-semibold text-[#6F6A63] transition hover:text-[#B89535]"
             >
               Ver detalhes
-            </button>
+            </Link>
           </div>
         </div>
-      </div>
-
-      <ProductDetailModal
-        category={category}
-        subcategory={subcategory}
-        description={description}
-        image={imageSrc}
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        price={numericPrice}
-        rating={rating}
-        ratingCount={ratingCount}
-        stock={availableStock}
-        productId={id}
-        title={title}
-      />
-    </>
+    </div>
   )
 }
