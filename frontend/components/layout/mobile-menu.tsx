@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, Grid2X2, House, Mail, ShoppingBag } from "lucide-react"
+import { ChevronDown, Grid2X2, House, ShoppingBag, User } from "lucide-react"
 import { useCartStore } from "@/frontend/store/cart-store"
 import { storeCategories } from "@/shared/utils/categories"
 
@@ -130,12 +130,12 @@ export function MobileMenu() {
         </button>
 
         <a
-          href="#footer"
+          href="/meus-pedidos"
           onClick={() => handleNavigate("conta")}
           className={itemClass("conta")}
         >
-          <Mail size={21} />
-          Contato
+          <User size={21} />
+          Pedidos
           {active === "conta" && (
             <span className="absolute bottom-0 h-1 w-7 rounded-full bg-[#B89535]" />
           )}

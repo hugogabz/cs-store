@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
+import { generateNextOrderNumber } from "@/backend/services/orders"
 import { getPrisma } from "@/backend/services/prisma"
 import { sendOrderStatusEmail } from "@/shared/email"
 
@@ -131,56 +132,65 @@ export async function POST(request: Request) {
   const total = subtotal + shippingPrice
 
   const prisma = getPrisma()
-  const order = await prisma.order.create({
-    data: {
-      customerName,
-      customerEmail,
-      customerPhone,
-      customerCpf,
-      cep,
-      address,
-      city,
-      state,
-      subtotal,
-      shippingPrice,
-      shippingMethod,
-      total,
-      status: "pending",
-      // Future InfinitePay step:
-      // create the checkout/payment link with total products + shipping.
-      // Save paymentUrl and paymentId when the provider returns them.
-      // A future webhook will update status to "paid".
-      paymentProvider: null,
-      paymentId: null,
-      paymentUrl: null,
-      items: {
-        create: items.map((item) => ({
-          productId: item.productId,
-          title: item.title,
-          image: item.image,
-          price: item.price,
-          quantity: item.quantity,
-        })),
-      },
-      statusHistory: {
-        create: {
-          status: "pending",
+  const order = await prisma.$transaction(async (tx) => {
+    const orderNumber = await generateNextOrderNumber(tx)
+    const createdOrder = await tx.order.create({
+      data: {
+        orderNumber,
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerCpf,
+        cep,
+        address,
+        city,
+        state,
+        subtotal,
+        shippingPrice,
+        shippingMethod,
+        total,
+        status: "pending",
+        // Future InfinitePay step:
+        // create the checkout/payment link with total products + shipping.
+        // Save paymentUrl and paymentId when the provider returns them.
+        // A future webhook will update status to "paid".
+        paymentProvider: null,
+        paymentId: null,
+        paymentUrl: null,
+        items: {
+          create: items.map((item) => ({
+            productId: item.productId,
+            title: item.title,
+            image: item.image,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        },
+        statusHistory: {
+          create: {
+            status: "pending",
+          },
         },
       },
-    },
-    include: {
-      items: true,
-      statusHistory: true,
-    },
-  })
+      include: {
+        items: true,
+        statusHistory: true,
+      },
+    })
 
-  if (reservationId) {
-    await prisma.$executeRaw`
-      UPDATE "Order"
-      SET "reservationId" = ${reservationId}
-      WHERE "id" = ${order.id}
-    `
-  }
+    if (reservationId) {
+      await tx.$executeRaw`
+        UPDATE "Order"
+        SET "reservationId" = ${reservationId}
+        WHERE "id" = ${createdOrder.id}
+      `
+    }
+
+    return {
+      ...createdOrder,
+      reservationId,
+    }
+  })
 
   const email = await sendOrderStatusEmail(order).catch((error) => ({
     attempted: true,
@@ -194,6 +204,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     orderId: order.id,
+    orderNumber: order.orderNumber,
     order,
     email,
   })

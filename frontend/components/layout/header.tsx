@@ -79,6 +79,9 @@ export function Header() {
             </button>
 
             <button
+              onClick={() => {
+                window.location.href = "/meus-pedidos"
+              }}
               className="rounded-full p-3 transition hover:bg-neutral-100 hover:text-[#B89535]"
               aria-label="Área do cliente"
             >

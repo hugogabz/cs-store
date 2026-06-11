@@ -17,6 +17,7 @@ type OrderItemSummary = {
 
 type OrderSummary = {
   id: string
+  orderNumber: string
   customerName: string
   customerEmail: string
   customerPhone: string
@@ -104,7 +105,7 @@ export default function AdminOrdersPage() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B89535]">
-                        #{order.id.slice(-8)}
+                        #{order.orderNumber ?? order.id.slice(-8)}
                       </p>
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${orderStatusBadgeClass(order.status)}`}>
                         {orderStatusLabel(order.status)}

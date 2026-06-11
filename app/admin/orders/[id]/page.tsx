@@ -24,6 +24,7 @@ type OrderItem = {
 
 type OrderDetails = {
   id: string
+  orderNumber: string
   customerName: string
   customerEmail: string
   customerPhone: string
@@ -239,7 +240,7 @@ export default function AdminOrderDetailsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#B89535]">
-              Pedido #{order.id.slice(-8)}
+              Pedido #{order.orderNumber ?? order.id.slice(-8)}
             </span>
             <h1 className="mt-2 text-3xl font-semibold text-[#1A1A1A] md:text-4xl">
               {order.customerName}

@@ -33,6 +33,7 @@ function CheckoutSuccessContent() {
   const [confirmationState, setConfirmationState] =
     useState<ConfirmationState>("checking")
   const [confirmedOrderId, setConfirmedOrderId] = useState("")
+  const [confirmedOrderNumber, setConfirmedOrderNumber] = useState("")
 
   const returnData = useMemo(() => {
     return {
@@ -83,6 +84,7 @@ function CheckoutSuccessContent() {
 
         if (data?.status === "paid") {
           setConfirmedOrderId(data?.orderId ?? returnData.orderNsu ?? "")
+          setConfirmedOrderNumber(data?.orderNumber ?? "")
           clearCart()
           window.localStorage.removeItem(CART_STORAGE_KEY)
           window.localStorage.removeItem(CHECKOUT_STORAGE_KEY)
@@ -93,11 +95,13 @@ function CheckoutSuccessContent() {
 
         if (["cancelled", "canceled", "failed"].includes(data?.status)) {
           setConfirmedOrderId(data?.orderId ?? returnData.orderNsu ?? "")
+          setConfirmedOrderNumber(data?.orderNumber ?? "")
           setConfirmationState("failed")
           return
         }
 
         setConfirmedOrderId(data?.orderId ?? returnData.orderNsu ?? "")
+        setConfirmedOrderNumber(data?.orderNumber ?? "")
         setConfirmationState("pending")
       })
       .catch(() => {
@@ -144,7 +148,7 @@ function CheckoutSuccessContent() {
           {(confirmedOrderId || returnData.orderNsu) && (
             <p>
               <span className="font-semibold text-[#1A1A1A]">Pedido:</span>{" "}
-              {confirmedOrderId || returnData.orderNsu}
+              {confirmedOrderNumber || confirmedOrderId || returnData.orderNsu}
             </p>
           )}
 
@@ -184,10 +188,10 @@ function CheckoutSuccessContent() {
 
           {(confirmedOrderId || returnData.orderNsu) && (
             <Link
-              href={`/pedido/${confirmedOrderId || returnData.orderNsu}`}
+              href="/meus-pedidos"
               className="inline-flex rounded-full border border-[#E7E1D8] px-6 py-3 font-semibold text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
             >
-              Acompanhar pedido
+              Acompanhar Pedido
             </Link>
           )}
         </div>

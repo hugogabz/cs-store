@@ -45,6 +45,7 @@ model StockReservation {
 
 model Order {
   id              String      @id @default(cuid())
+  orderNumber     String      @unique
   customerName    String
   customerEmail   String
   customerPhone   String

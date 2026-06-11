@@ -20,6 +20,7 @@ type OrderMatchRow = {
 
 type OrderControlRow = {
   id: string
+  orderNumber: string
   status: string
   paymentId: string | null
   paymentUrl: string | null
@@ -147,6 +148,7 @@ async function getOrderControl(
   const rows = await tx.$queryRaw<OrderControlRow[]>`
     SELECT
       "id",
+      "orderNumber",
       "status",
       "paymentId",
       "paymentUrl",
@@ -473,6 +475,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       status: "paid",
       orderId,
+      orderNumber: order.orderNumber,
       deductedStock: false,
       releasedReservations,
     })
@@ -519,6 +522,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         status: result.order?.status ?? "paid",
         orderId,
+        orderNumber: result.order?.orderNumber,
         payment,
         deductedStock: result.deductedStock,
         releasedReservations: result.releasedReservations,
@@ -551,6 +555,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     status: result.order?.status ?? status,
     orderId,
+    orderNumber: result.order?.orderNumber,
     payment,
     deductedStock: false,
     email: result.email,

@@ -127,6 +127,7 @@ export default function CheckoutPage() {
   const [reserving, setReserving] = useState(false)
   const [creatingOrder, setCreatingOrder] = useState(false)
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
+  const [createdOrderNumber, setCreatedOrderNumber] = useState<string | null>(null)
   const [customerName, setCustomerName] = useState("")
   const [customerEmail, setCustomerEmail] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
@@ -472,6 +473,7 @@ export default function CheckoutPage() {
       }
 
       setCreatedOrderId(data.orderId)
+      setCreatedOrderNumber(data.orderNumber ?? null)
       setReservationNotice("Pedido criado. Próxima etapa: pagamento.")
       toast.success("Pedido criado. Próxima etapa: pagamento.")
       return data.orderId as string
@@ -925,7 +927,7 @@ export default function CheckoutPage() {
 
             {createdOrderId && (
               <p className="mt-3 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 text-center text-sm font-semibold text-[#1A1A1A]">
-                Pedido #{createdOrderId.slice(-8)} criado. Próxima etapa:
+                Pedido #{createdOrderNumber ?? createdOrderId.slice(-8)} criado. Próxima etapa:
                 pagamento InfinitePay.
               </p>
             )}

@@ -10,6 +10,7 @@ type OrderStatusEmailItem = {
 
 export type OrderStatusEmailOrder = {
   id: string
+  orderNumber?: string | null
   customerName: string
   customerEmail: string | null
   total: number
@@ -103,7 +104,8 @@ function resendErrorMessage(error: unknown) {
 }
 
 function buildOrderStatusEmailHtml(order: OrderStatusEmailOrder) {
-  const orderUrl = `${siteUrl()}/pedido/${order.id}`
+  const orderUrl = `${siteUrl()}/meus-pedidos`
+  const orderNumber = order.orderNumber || order.id.slice(-8)
   const statusLabel = orderStatusLabel(order.status)
   const itemsHtml = order.items
     .map((item) => {
@@ -139,7 +141,7 @@ function buildOrderStatusEmailHtml(order: OrderStatusEmailOrder) {
             </h1>
             <p style="margin: 12px 0 0; color: #6f6a63; line-height: 1.6;">
               Olá, ${escapeHtml(order.customerName)}. Seu pedido
-              <strong>#${escapeHtml(order.id.slice(-8))}</strong> foi atualizado.
+              <strong>#${escapeHtml(orderNumber)}</strong> foi atualizado.
             </p>
           </div>
 
@@ -167,7 +169,7 @@ function buildOrderStatusEmailHtml(order: OrderStatusEmailOrder) {
 
             <div style="margin-top: 28px; text-align: center;">
               <a href="${orderUrl}" style="display: inline-block; background: #b89535; color: #111111; text-decoration: none; padding: 13px 22px; border-radius: 999px; font-weight: 700;">
-                Acompanhar pedido
+                Acompanhar Pedido
               </a>
             </div>
           </div>
