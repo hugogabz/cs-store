@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { AdminNav } from "@/frontend/components/admin/admin-nav"
 import { formatCurrency } from "@/shared/utils/currency"
+import { orderStatusBadgeClass, orderStatusLabel } from "@/shared/utils/order-status"
 
 type OrderItemSummary = {
   id: string
@@ -27,28 +28,6 @@ type OrderSummary = {
   captureMethod: string | null
   createdAt: string
   items: OrderItemSummary[]
-}
-
-const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
-  canceled: "Cancelado",
-  cancelled: "Cancelado",
-  shipped: "Enviado",
-  delivered: "Entregue",
-}
-
-const statusClasses: Record<string, string> = {
-  pending: "bg-yellow-50 text-yellow-700",
-  paid: "bg-emerald-50 text-emerald-700",
-  canceled: "bg-red-50 text-red-600",
-  cancelled: "bg-red-50 text-red-600",
-  shipped: "bg-blue-50 text-blue-700",
-  delivered: "bg-slate-100 text-emerald-800",
-}
-
-function statusBadgeClass(status: string) {
-  return statusClasses[status] ?? "bg-[#B89535]/15 text-[#8A6800]"
 }
 
 export default function AdminOrdersPage() {
@@ -127,8 +106,8 @@ export default function AdminOrdersPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B89535]">
                         #{order.id.slice(-8)}
                       </p>
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(order.status)}`}>
-                        {statusLabels[order.status] ?? order.status}
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${orderStatusBadgeClass(order.status)}`}>
+                        {orderStatusLabel(order.status)}
                       </span>
                     </div>
 

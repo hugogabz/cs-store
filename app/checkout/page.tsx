@@ -20,6 +20,7 @@ const inputClass =
   "rounded-xl border border-[#E7E1D8] bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#B89535]"
 
 const CHECKOUT_STORAGE_KEY = "cs-store-checkout-reservation"
+const CHECKOUT_ORDER_KEY = "cs-store-checkout-order-id"
 
 type ReservationState = {
   reservationId: string
@@ -510,6 +511,7 @@ export default function CheckoutPage() {
         throw new Error(data?.message ?? "Não foi possível iniciar o pagamento.")
       }
 
+      window.localStorage.setItem(CHECKOUT_ORDER_KEY, orderId)
       window.location.href = data.paymentUrl
     } catch (error) {
       toast.error(

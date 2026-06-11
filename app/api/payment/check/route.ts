@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import type { Prisma, PrismaClient } from "@prisma/client"
 import { getPrisma } from "@/backend/services/prisma"
 import { releaseStockReservationGroup } from "@/backend/services/stock-reservations"
+import { normalizeOrderStatus } from "@/shared/utils/order-status"
 
 type InfinitePayCheckResponse = {
   paid?: boolean
@@ -40,7 +41,7 @@ function logPaymentCheck(message: string, data?: unknown) {
 function normalizePaymentStatus(data: InfinitePayCheckResponse | null) {
   if (!data) return "pending"
   if (data.paid || data.success || data.approved) return "paid"
-  if (data.cancelled || data.canceled) return "canceled"
+  if (data.cancelled || data.canceled) return "cancelled"
 
   const status = String(data.status ?? "").toLowerCase()
 
@@ -49,7 +50,7 @@ function normalizePaymentStatus(data: InfinitePayCheckResponse | null) {
   }
 
   if (["cancelled", "canceled", "cancelado", "failed", "error"].includes(status)) {
-    return "canceled"
+    return "cancelled"
   }
 
   return "pending"
@@ -224,6 +225,8 @@ async function markOrderAsPaidFromInfinitePay({
 
     const now = new Date()
 
+    const nextStatus = "paid"
+
     if (shouldDeductStock) {
       await tx.$executeRaw`
         UPDATE "Order"
@@ -249,6 +252,15 @@ async function markOrderAsPaidFromInfinitePay({
           "updatedAt" = ${now}
         WHERE "id" = ${orderId}
       `
+    }
+
+    if (order.status !== nextStatus) {
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: nextStatus,
+        },
+      })
     }
 
     return {
@@ -283,7 +295,7 @@ async function updateOrderAsPendingOrFailed({
   captureMethod,
 }: {
   orderId: string
-  status: "pending" | "canceled"
+  status: "pending" | "cancelled"
   paymentId: string
   receiptUrl: string
   captureMethod: string
@@ -303,7 +315,18 @@ async function updateOrderAsPendingOrFailed({
     WHERE "id" = ${orderId}
   `
 
-  return getOrderControl(orderId)
+  const updatedOrder = await getOrderControl(orderId)
+
+  if (updatedOrder && normalizeOrderStatus(updatedOrder.status) === status) {
+    await prisma.orderStatusHistory.create({
+      data: {
+        orderId,
+        status,
+      },
+    })
+  }
+
+  return updatedOrder
 }
 
 export async function POST(request: Request) {
@@ -440,7 +463,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const nextStatus = status === "canceled" ? "canceled" : "pending"
+  const nextStatus = status === "cancelled" ? "cancelled" : "pending"
   const updatedOrder = await updateOrderAsPendingOrFailed({
     orderId,
     status: nextStatus,

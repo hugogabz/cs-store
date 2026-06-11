@@ -63,11 +63,26 @@ model Order {
   paymentUrl      String?
   receiptUrl      String?
   captureMethod   String?
+  trackingCode    String?
   reservationId   String?
   stockDeductedAt DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+}
+
+model OrderStatusHistory {
+  id           String   @id @default(cuid())
+  orderId      String
+  status       String
+  trackingCode String?
+  createdAt    DateTime @default(now())
+
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
 }
 
 model OrderItem {

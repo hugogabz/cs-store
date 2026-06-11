@@ -65,6 +65,7 @@ export async function GET() {
   const orders = await prisma.order.findMany({
     include: {
       items: true,
+      statusHistory: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -160,9 +161,15 @@ export async function POST(request: Request) {
           quantity: item.quantity,
         })),
       },
+      statusHistory: {
+        create: {
+          status: "pending",
+        },
+      },
     },
     include: {
       items: true,
+      statusHistory: true,
     },
   })
 

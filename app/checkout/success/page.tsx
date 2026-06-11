@@ -9,6 +9,7 @@ type ConfirmationState = "checking" | "paid" | "pending" | "failed"
 
 const CHECKOUT_STORAGE_KEY = "cs-store-checkout-reservation"
 const CART_STORAGE_KEY = "cs-store-cart"
+const CHECKOUT_ORDER_KEY = "cs-store-checkout-order-id"
 
 const captureMethodLabels: Record<string, string> = {
   credit: "Cartão",
@@ -31,11 +32,17 @@ function CheckoutSuccessContent() {
   const clearCart = useCartStore((state) => state.clearCart)
   const [confirmationState, setConfirmationState] =
     useState<ConfirmationState>("checking")
+  const [confirmedOrderId, setConfirmedOrderId] = useState("")
 
   const returnData = useMemo(() => {
     return {
       receiptUrl: searchParams.get("receipt_url"),
-      orderNsu: searchParams.get("order_nsu") ?? searchParams.get("orderId"),
+      orderNsu:
+        searchParams.get("order_nsu") ??
+        searchParams.get("orderId") ??
+        (typeof window !== "undefined"
+          ? window.localStorage.getItem(CHECKOUT_ORDER_KEY)
+          : null),
       slug: searchParams.get("slug"),
       captureMethod: searchParams.get("capture_method"),
       transactionId: searchParams.get("transaction_id"),
@@ -54,7 +61,10 @@ function CheckoutSuccessContent() {
     )
 
     if (!hasPaymentIdentifier) {
-      queueMicrotask(() => setConfirmationState("pending"))
+      queueMicrotask(() => {
+        setConfirmedOrderId(returnData.orderNsu ?? "")
+        setConfirmationState("pending")
+      })
       return
     }
 
@@ -72,18 +82,22 @@ function CheckoutSuccessContent() {
         if (ignore) return
 
         if (data?.status === "paid") {
+          setConfirmedOrderId(data?.orderId ?? returnData.orderNsu ?? "")
           clearCart()
           window.localStorage.removeItem(CART_STORAGE_KEY)
           window.localStorage.removeItem(CHECKOUT_STORAGE_KEY)
+          window.localStorage.removeItem(CHECKOUT_ORDER_KEY)
           setConfirmationState("paid")
           return
         }
 
         if (["cancelled", "canceled", "failed"].includes(data?.status)) {
+          setConfirmedOrderId(data?.orderId ?? returnData.orderNsu ?? "")
           setConfirmationState("failed")
           return
         }
 
+        setConfirmedOrderId(data?.orderId ?? returnData.orderNsu ?? "")
         setConfirmationState("pending")
       })
       .catch(() => {
@@ -127,10 +141,10 @@ function CheckoutSuccessContent() {
         <p className="mt-3 text-[#6F6A63]">{description}</p>
 
         <div className="mt-6 space-y-2 rounded-2xl bg-[#F8F6F2] p-4 text-left text-sm text-[#5C5C5C]">
-          {returnData.orderNsu && (
+          {(confirmedOrderId || returnData.orderNsu) && (
             <p>
               <span className="font-semibold text-[#1A1A1A]">Pedido:</span>{" "}
-              {returnData.orderNsu}
+              {confirmedOrderId || returnData.orderNsu}
             </p>
           )}
 
@@ -166,6 +180,15 @@ function CheckoutSuccessContent() {
             >
               Ver comprovante
             </a>
+          )}
+
+          {(confirmedOrderId || returnData.orderNsu) && (
+            <Link
+              href={`/pedido/${confirmedOrderId || returnData.orderNsu}`}
+              className="inline-flex rounded-full border border-[#E7E1D8] px-6 py-3 font-semibold text-[#1A1A1A] transition hover:border-[#B89535] hover:text-[#B89535]"
+            >
+              Acompanhar pedido
+            </Link>
           )}
         </div>
       </section>

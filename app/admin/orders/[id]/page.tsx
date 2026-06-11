@@ -8,6 +8,11 @@ import { toast } from "sonner"
 import { AdminNav } from "@/frontend/components/admin/admin-nav"
 import { formatCurrency } from "@/shared/utils/currency"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
+import {
+  ORDER_STATUSES,
+  orderStatusBadgeClass,
+  orderStatusLabel,
+} from "@/shared/utils/order-status"
 
 type OrderItem = {
   id: string
@@ -37,32 +42,16 @@ type OrderDetails = {
   paymentUrl: string | null
   receiptUrl: string | null
   captureMethod: string | null
+  trackingCode: string | null
   createdAt: string
+  updatedAt: string
   items: OrderItem[]
-}
-
-const orderStatuses = ["pending", "paid", "shipped", "delivered", "canceled"]
-
-const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
-  canceled: "Cancelado",
-  cancelled: "Cancelado",
-  shipped: "Enviado",
-  delivered: "Entregue",
-}
-
-const statusClasses: Record<string, string> = {
-  pending: "bg-yellow-50 text-yellow-700",
-  paid: "bg-emerald-50 text-emerald-700",
-  canceled: "bg-red-50 text-red-600",
-  cancelled: "bg-red-50 text-red-600",
-  shipped: "bg-blue-50 text-blue-700",
-  delivered: "bg-slate-100 text-emerald-800",
-}
-
-function statusBadgeClass(status: string) {
-  return statusClasses[status] ?? "bg-[#B89535]/15 text-[#8A6800]"
+  statusHistory: {
+    id: string
+    status: string
+    trackingCode: string | null
+    createdAt: string
+  }[]
 }
 
 export default function AdminOrderDetailsPage() {
@@ -71,6 +60,8 @@ export default function AdminOrderDetailsPage() {
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState("pending")
+  const [trackingCode, setTrackingCode] = useState("")
 
   async function loadOrder() {
     const response = await fetch(`/api/orders/${params.id}`)
@@ -86,6 +77,8 @@ export default function AdminOrderDetailsPage() {
 
     const data = await response.json()
     setOrder(data)
+    setSelectedStatus(data.status)
+    setTrackingCode(data.trackingCode ?? "")
   }
 
   useEffect(() => {
@@ -104,6 +97,8 @@ export default function AdminOrderDetailsPage() {
       .then((data) => {
         if (!ignore && data) {
           setOrder(data)
+          setSelectedStatus(data.status)
+          setTrackingCode(data.trackingCode ?? "")
         }
       })
       .catch(() => {
@@ -122,7 +117,7 @@ export default function AdminOrderDetailsPage() {
     }
   }, [params.id, router])
 
-  async function updateStatus(status: string) {
+  async function updateStatus(status = selectedStatus) {
     setUpdatingStatus(true)
 
     try {
@@ -133,6 +128,7 @@ export default function AdminOrderDetailsPage() {
         },
         body: JSON.stringify({
           status,
+          trackingCode,
         }),
       })
 
@@ -146,7 +142,7 @@ export default function AdminOrderDetailsPage() {
       }
 
       await loadOrder()
-      toast.success("Status atualizado.")
+      toast.success("Pedido atualizado.")
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -281,8 +277,8 @@ export default function AdminOrderDetailsPage() {
             <h2 className="text-xl font-semibold text-[#1A1A1A]">
               Itens comprados
             </h2>
-            <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(order.status)}`}>
-              {statusLabels[order.status] ?? order.status}
+            <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${orderStatusBadgeClass(order.status)}`}>
+              {orderStatusLabel(order.status)}
             </span>
           </div>
 
@@ -321,9 +317,55 @@ export default function AdminOrderDetailsPage() {
               Status do pedido
             </h2>
 
-            <p className={`mt-3 w-fit rounded-full px-3 py-1 text-sm font-semibold ${statusBadgeClass(order.status)}`}>
-              {statusLabels[order.status] ?? order.status}
+            <p className={`mt-3 w-fit rounded-full px-3 py-1 text-sm font-semibold ${orderStatusBadgeClass(order.status)}`}>
+              {orderStatusLabel(order.status)}
             </p>
+
+            <p className="mt-3 text-sm text-[#6F6A63]">
+              Última atualização: {new Date(order.updatedAt).toLocaleString("pt-BR")}
+            </p>
+
+            <div className="mt-5 grid gap-3 rounded-2xl border border-[#E7E1D8] bg-[#F8F6F2] p-4 sm:grid-cols-[1fr_auto]">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#1A1A1A]">
+                  Status atual
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(event) => setSelectedStatus(event.target.value)}
+                  className="w-full rounded-xl border border-[#E7E1D8] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#B89535]"
+                >
+                  {ORDER_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {orderStatusLabel(status)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                disabled={updatingStatus}
+                onClick={() => void updateStatus()}
+                className="self-end rounded-full bg-[#B89535] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#A7832E] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Salvar status
+              </button>
+            </div>
+
+            {selectedStatus === "shipped" && (
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-semibold text-[#1A1A1A]">
+                  Código de rastreio
+                </label>
+                <input
+                  value={trackingCode}
+                  onChange={(event) => setTrackingCode(event.target.value)}
+                  placeholder="Informe o código de rastreio"
+                  className="w-full rounded-xl border border-[#E7E1D8] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#B89535]"
+                />
+              </div>
+            )}
 
             <div className="mt-5 flex flex-wrap gap-2">
               <button
@@ -359,26 +401,47 @@ export default function AdminOrderDetailsPage() {
               </button>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {orderStatuses.map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  disabled={updatingStatus || order.status === status}
-                  onClick={() => void updateStatus(status)}
-                  className="rounded-full border border-[#E7E1D8] px-4 py-2 text-sm font-semibold transition hover:border-[#B89535] hover:text-[#B89535] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {statusLabels[status]}
-                </button>
-              ))}
-            </div>
-
             <div className="mt-5 space-y-2 rounded-xl bg-[#F8F6F2] p-4 text-sm text-[#6F6A63]">
               <p>paymentProvider: {order.paymentProvider ?? "Ainda nao definido"}</p>
               <p>paymentId: {order.paymentId ?? "Ainda nao gerado"}</p>
               <p className="break-all">paymentUrl: {order.paymentUrl ?? "Ainda nao gerado"}</p>
               <p className="break-all">receiptUrl: {order.receiptUrl ?? "Ainda nao recebido"}</p>
               <p>Metodo de pagamento: {order.captureMethod ?? "Ainda nao recebido"}</p>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-[#E7E1D8] p-4">
+              <h3 className="font-semibold text-[#1A1A1A]">
+                Histórico de atualização
+              </h3>
+
+              <div className="mt-4 space-y-3">
+                {order.statusHistory.map((history) => (
+                  <div
+                    key={history.id}
+                    className="rounded-xl bg-[#F8F6F2] p-3 text-sm text-[#5C5C5C]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${orderStatusBadgeClass(history.status)}`}>
+                        {orderStatusLabel(history.status)}
+                      </span>
+                      <span>
+                        {new Date(history.createdAt).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    {history.trackingCode && (
+                      <p className="mt-2 break-all">
+                        Rastreio: {history.trackingCode}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                {order.statusHistory.length === 0 && (
+                  <p className="text-sm text-[#6F6A63]">
+                    Nenhuma atualização registrada ainda.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

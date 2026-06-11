@@ -2,15 +2,7 @@ import { NextResponse } from "next/server"
 import { isAdminAuthenticated, unauthorizedResponse } from "@/backend/services/admin-auth"
 import { getPrisma } from "@/backend/services/prisma"
 import { releaseStockReservationGroup } from "@/backend/services/stock-reservations"
-
-const ALLOWED_ORDER_STATUSES = [
-  "pending",
-  "paid",
-  "canceled",
-  "cancelled",
-  "shipped",
-  "delivered",
-]
+import { isAllowedOrderStatus, normalizeOrderStatus } from "@/shared/utils/order-status"
 
 type RouteContext = {
   params: Promise<{
@@ -22,6 +14,11 @@ type OrderControlRow = {
   status: string
   reservationId: string | null
   stockDeductedAt: Date | string | null
+  trackingCode: string | null
+}
+
+function normalizeText(value: unknown) {
+  return String(value ?? "").trim()
 }
 
 function createManualTestPaymentId(orderId: string) {
@@ -43,6 +40,11 @@ async function getOrderWithItems(id: string) {
     },
     include: {
       items: true,
+      statusHistory: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
   })
 }
@@ -125,6 +127,15 @@ async function markOrderAsPaidForTest(id: string) {
       `
     }
 
+    if (order.status !== "paid") {
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          status: "paid",
+        },
+      })
+    }
+
     return {
       deductedStock: shouldDeductStock,
     }
@@ -150,7 +161,7 @@ async function markOrderAsCanceled(id: string) {
 
   await prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<OrderControlRow[]>`
-      SELECT "status", "reservationId", "stockDeductedAt"
+      SELECT "status", "reservationId", "stockDeductedAt", "trackingCode"
       FROM "Order"
       WHERE "id" = ${id}
       LIMIT 1
@@ -168,10 +179,18 @@ async function markOrderAsCanceled(id: string) {
     await tx.$executeRaw`
       UPDATE "Order"
       SET
-        "status" = 'canceled',
+        "status" = 'cancelled',
         "updatedAt" = ${now}
       WHERE "id" = ${id}
     `
+
+    await tx.orderStatusHistory.create({
+      data: {
+        orderId: id,
+        status: "cancelled",
+        trackingCode: order.trackingCode,
+      },
+    })
   })
 
   const releasedReservations = await releaseReservationIfPossible(reservationId)
@@ -200,6 +219,11 @@ export async function GET(_request: Request, context: RouteContext) {
     },
     include: {
       items: true,
+      statusHistory: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
   })
 
@@ -225,7 +249,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params
   const body = await request.json().catch(() => null)
   const action = String(body?.action ?? "")
-  const status = String(body?.status ?? "")
+  const status = normalizeOrderStatus(normalizeText(body?.status))
+  const trackingCode = normalizeText(body?.trackingCode)
 
   if (action === "mark-paid-test") {
     try {
@@ -294,7 +319,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
   }
 
-  if (!ALLOWED_ORDER_STATUSES.includes(status)) {
+  if (!isAllowedOrderStatus(status)) {
     return NextResponse.json(
       {
         message: "Status de pedido inválido.",
@@ -306,16 +331,57 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const prisma = getPrisma()
-  const order = await prisma.order.update({
-    where: {
-      id,
-    },
-    data: {
-      status,
-    },
-    include: {
-      items: true,
-    },
+  const order = await prisma.$transaction(async (tx) => {
+    const existingOrder = await tx.order.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        status: true,
+        trackingCode: true,
+      },
+    })
+
+    if (!existingOrder) {
+      return null
+    }
+
+    const nextTrackingCode = status === "shipped"
+      ? trackingCode || existingOrder.trackingCode
+      : trackingCode || existingOrder.trackingCode
+
+    const updatedOrder = await tx.order.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+        trackingCode: nextTrackingCode || null,
+      },
+      include: {
+        items: true,
+        statusHistory: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+    })
+
+    if (
+      existingOrder.status !== status ||
+      (existingOrder.trackingCode ?? "") !== (nextTrackingCode ?? "")
+    ) {
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          status,
+          trackingCode: nextTrackingCode || null,
+        },
+      })
+    }
+
+    return updatedOrder
   }).catch(() => null)
 
   if (!order) {
