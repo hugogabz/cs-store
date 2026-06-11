@@ -3,8 +3,7 @@ import { storeCategories } from "@/shared/utils/categories"
 
 const customerEmail = "souzacristiane931@gmail.com"
 const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${customerEmail}`
-const instagramUrl =
-  "https://www.instagram.com/cs.trancinhas?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+const instagramUrl = "https://www.instagram.com/cs.trancinhas"
 
 export function Footer() {
   return (
