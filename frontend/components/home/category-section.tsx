@@ -2,14 +2,16 @@
 
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import { ProductCard } from "@/frontend/components/products/product-card"
+import { isSameSubcategory } from "@/shared/utils/categories"
 
 type Product = {
   id?: string
   title: string
   description?: string | null
   category: string
+  subcategory?: string | null
   price: string | number
   image: string
   stock: number
@@ -23,6 +25,7 @@ type CategorySectionProps = {
   subtitle: string
   products: Product[]
   seeMoreHref: string
+  subcategories?: readonly string[]
 }
 
 export function CategorySection({
@@ -31,8 +34,19 @@ export function CategorySection({
   subtitle,
   products,
   seeMoreHref,
+  subcategories = [],
 }: CategorySectionProps) {
   const carouselRef = useRef<HTMLDivElement>(null)
+  const [activeSubcategory, setActiveSubcategory] = useState("todos")
+  const visibleProducts = useMemo(() => {
+    if (activeSubcategory === "todos") {
+      return products
+    }
+
+    return products.filter((product) =>
+      isSameSubcategory(product.subcategory, activeSubcategory)
+    )
+  }, [activeSubcategory, products])
 
   function scrollCarousel(direction: "left" | "right") {
     const carousel = carouselRef.current
@@ -78,8 +92,39 @@ export function CategorySection({
           </Link>
         </div>
 
+        {subcategories.length > 0 && (
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              type="button"
+              onClick={() => setActiveSubcategory("todos")}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeSubcategory === "todos"
+                  ? "bg-[#B89535] text-black"
+                  : "border border-[#E7E1D8] bg-white text-[#5C5C5C] hover:border-[#B89535] hover:text-[#B89535]"
+              }`}
+            >
+              Todos
+            </button>
+
+            {subcategories.map((subcategory) => (
+              <button
+                key={subcategory}
+                type="button"
+                onClick={() => setActiveSubcategory(subcategory)}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  activeSubcategory === subcategory
+                    ? "bg-[#B89535] text-black"
+                    : "border border-[#E7E1D8] bg-white text-[#5C5C5C] hover:border-[#B89535] hover:text-[#B89535]"
+                }`}
+              >
+                {subcategory}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="relative">
-          {products.length > 0 && (
+          {visibleProducts.length > 0 && (
             <>
               <div className="pointer-events-none absolute left-0 top-0 z-10 hidden h-full w-12 bg-gradient-to-r from-[#F8F6F2] to-transparent md:block" />
               <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#F8F6F2] to-transparent" />
@@ -104,12 +149,12 @@ export function CategorySection({
             </>
           )}
 
-          {products.length > 0 ? (
+          {visibleProducts.length > 0 ? (
             <div
               ref={carouselRef}
               className="flex snap-x gap-6 overflow-x-auto scroll-smooth pb-6 pr-12 scrollbar-hide md:px-2"
             >
-              {products.map((product) => (
+              {visibleProducts.map((product) => (
                 <div
                   key={product.id ?? product.title}
                   className="min-w-[82%] snap-start sm:min-w-[48%] md:min-w-[calc((100%_-_48px)/3)] lg:min-w-[calc((100%_-_72px)/4)]"

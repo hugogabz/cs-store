@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ShoppingBag, User } from "lucide-react"
+import { ChevronDown, Search, ShoppingBag, User } from "lucide-react"
 import { useCartStore } from "@/frontend/store/cart-store"
 import { SearchModal } from "@/frontend/components/layout/search-modal"
+import { storeCategories } from "@/shared/utils/categories"
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -31,18 +32,41 @@ export function Header() {
             <Search size={20} />
           </button>
 
-          <nav className="hidden gap-10 text-sm font-medium md:flex">
-            <a href="#cabelos" className="transition hover:text-[#B89535]">
-              Cabelos
-            </a>
+          <nav className="hidden items-center gap-7 text-sm font-medium md:flex">
+            {storeCategories.map((category) => (
+              <div key={category.id} className="group relative">
+                <a
+                  href={`#${category.id}`}
+                  className="inline-flex items-center gap-1.5 py-7 transition hover:text-[#B89535]"
+                >
+                  {category.name}
+                  {category.subcategories.length > 0 && (
+                    <ChevronDown size={15} className="transition group-hover:rotate-180" />
+                  )}
+                </a>
 
-            <a href="#cosmeticos" className="transition hover:text-[#B89535]">
-              Cosméticos
-            </a>
+                {category.subcategories.length > 0 && (
+                  <div className="pointer-events-none absolute left-1/2 top-full w-64 -translate-x-1/2 translate-y-2 rounded-2xl border border-[#E7E1D8] bg-white p-2 opacity-0 shadow-[0_18px_50px_rgba(26,26,26,0.12)] transition duration-200 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
+                    <a
+                      href={`#${category.id}`}
+                      className="block rounded-xl px-4 py-3 font-semibold text-[#1A1A1A] transition hover:bg-[#F8F6F2] hover:text-[#B89535]"
+                    >
+                      Todos em {category.name}
+                    </a>
 
-            <a href="#acessorios" className="transition hover:text-[#B89535]">
-              Acessórios
-            </a>
+                    {category.subcategories.map((subcategory) => (
+                      <a
+                        key={subcategory}
+                        href={`/categoria/${category.slug}?subcategoria=${encodeURIComponent(subcategory)}`}
+                        className="block rounded-xl px-4 py-3 text-[#5C5C5C] transition hover:bg-[#F8F6F2] hover:text-[#B89535]"
+                      >
+                        {subcategory}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </nav>
 
           <div className="hidden items-center gap-4 md:flex">

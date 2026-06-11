@@ -6,7 +6,7 @@ import { MobileMenu } from "@/frontend/components/layout/mobile-menu"
 import { CartDrawer } from "@/frontend/components/layout/cart-drawer"
 import { BenefitsSection } from "@/frontend/components/home/benefits-section"
 import { getProducts } from "@/backend/services/products"
-import { isSameCategory } from "@/shared/utils/categories"
+import { isSameCategory, storeCategories } from "@/shared/utils/categories"
 
 export const dynamic = "force-dynamic"
 
@@ -21,10 +21,6 @@ export default async function Home() {
     products.filter(
       (product) => isSameCategory(product.category, category)
     )
-
-  const hairProducts = productsByCategory("Cabelos")
-  const cosmeticProducts = productsByCategory("Cosméticos")
-  const accessoryProducts = productsByCategory("Acessórios")
 
   return (
     <>
@@ -43,29 +39,17 @@ export default async function Home() {
           seeMoreHref="/categoria/destaques"
         />
 
-        <CategorySection
-          id="cabelos"
-          title="Linha Premium para Cabelos"
-          subtitle="Produtos sofisticados para cuidados capilares com acabamento profissional."
-          products={hairProducts}
-          seeMoreHref="/categoria/cabelos"
-        />
-
-        <CategorySection
-          id="cosmeticos"
-          title="Cosméticos Exclusivos"
-          subtitle="Maquiagem e skincare com visual refinado e qualidade premium."
-          products={cosmeticProducts}
-          seeMoreHref="/categoria/cosmeticos"
-        />
-
-        <CategorySection
-          id="acessorios"
-          title="Acessórios Elegantes"
-          subtitle="Peças modernas e sofisticadas para complementar seu estilo."
-          products={accessoryProducts}
-          seeMoreHref="/categoria/acessorios"
-        />
+        {storeCategories.map((category) => (
+          <CategorySection
+            key={category.id}
+            id={category.id}
+            title={category.title}
+            subtitle={category.subtitle}
+            products={productsByCategory(category.name)}
+            seeMoreHref={`/categoria/${category.slug}`}
+            subcategories={category.subcategories}
+          />
+        ))}
       </main>
 
       <Footer />

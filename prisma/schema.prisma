@@ -12,6 +12,7 @@ model Product {
   title     String
   description String?
   category  String
+  subcategory String?
   price     Float
   image     String
   featured  Boolean  @default(false)

@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       title: body.title,
       description: body.description?.trim() || null,
       category: body.category,
+      subcategory: body.subcategory?.trim() || null,
       price: toNumberPrice(body.price),
       image: normalizeProductImageSrc(body.image),
       featured: body.featured ?? false,

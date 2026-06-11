@@ -4,6 +4,7 @@ import Image from "next/image"
 import { useState } from "react"
 import { ProductDetailModal } from "@/frontend/components/products/product-detail-modal"
 import { useCartStore } from "@/frontend/store/cart-store"
+import { getProductSubcategoryLabel } from "@/shared/utils/categories"
 import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
 import { toast } from "sonner"
@@ -13,6 +14,7 @@ type ProductCardProps = {
   title: string
   description?: string | null
   category: string
+  subcategory?: string | null
   price: string | number
   image: string
   stock: number
@@ -25,6 +27,7 @@ export function ProductCard({
   title,
   description,
   category,
+  subcategory,
   price,
   image,
   stock = 0,
@@ -37,6 +40,7 @@ export function ProductCard({
   const numericPrice = toNumberPrice(price)
   const availableStock = Math.max(0, Math.floor(Number(stock) || 0))
   const isUnavailable = availableStock === 0
+  const subcategoryLabel = getProductSubcategoryLabel(category, subcategory)
   const stockLabel = isUnavailable
     ? "Produto indisponível"
     : availableStock <= 5
@@ -58,7 +62,7 @@ export function ProductCard({
 
         <div className="flex flex-1 flex-col p-4 md:p-5">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B89535]">
-            {category}
+            {subcategoryLabel ? `${category} / ${subcategoryLabel}` : category}
           </span>
 
           <h3 className="mt-2.5 line-clamp-2 min-h-12 text-base font-semibold leading-tight text-[#1A1A1A] md:text-lg">
@@ -119,6 +123,7 @@ export function ProductCard({
 
       <ProductDetailModal
         category={category}
+        subcategory={subcategory}
         description={description}
         image={imageSrc}
         isOpen={isDetailOpen}

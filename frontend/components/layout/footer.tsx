@@ -1,4 +1,5 @@
 import { Camera, Mail, MapPin } from "lucide-react"
+import { storeCategories } from "@/shared/utils/categories"
 
 const customerEmail = "souzacristiane931@gmail.com"
 const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${customerEmail}`
@@ -33,23 +34,15 @@ export function Footer() {
               Inicio
             </a>
 
-            <a href="#cabelos" className="block transition hover:text-[#B89535]">
-              Cabelos
-            </a>
-
-            <a
-              href="#cosmeticos"
-              className="block transition hover:text-[#B89535]"
-            >
-              Cosmeticos
-            </a>
-
-            <a
-              href="#acessorios"
-              className="block transition hover:text-[#B89535]"
-            >
-              Acessorios
-            </a>
+            {storeCategories.map((category) => (
+              <a
+                key={category.id}
+                href={`#${category.id}`}
+                className="block transition hover:text-[#B89535]"
+              >
+                {category.name}
+              </a>
+            ))}
           </div>
         </div>
 

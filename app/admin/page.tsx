@@ -6,6 +6,11 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { AdminNav } from "@/frontend/components/admin/admin-nav"
+import {
+  getProductSubcategoryLabel,
+  getSubcategoriesForCategory,
+  storeCategories,
+} from "@/shared/utils/categories"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
 import { normalizeSearchText } from "@/shared/utils/search"
 
@@ -14,6 +19,7 @@ type Product = {
   title: string
   description: string | null
   category: string
+  subcategory: string | null
   price: number
   image: string
   featured: boolean
@@ -46,6 +52,7 @@ export default function AdminPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("Cabelos")
+  const [subcategory, setSubcategory] = useState("")
   const [price, setPrice] = useState("")
   const [stock, setStock] = useState("0")
   const [weight, setWeight] = useState("")
@@ -63,6 +70,7 @@ export default function AdminPage() {
   const imagePreviewSrc = localPreview ?? (
     image.trim() ? normalizeProductImageSrc(image) : null
   )
+  const subcategoryOptions = getSubcategoriesForCategory(category)
 
   useEffect(() => {
     return () => {
@@ -86,6 +94,7 @@ export default function AdminPage() {
     setTitle("")
     setDescription("")
     setCategory("Cabelos")
+    setSubcategory("")
     setPrice("")
     setStock("0")
     setWeight("")
@@ -220,6 +229,7 @@ export default function AdminPage() {
             title,
             description,
             category,
+            subcategory,
             price,
             stock,
             weight,
@@ -262,6 +272,7 @@ export default function AdminPage() {
     setTitle(product.title)
     setDescription(product.description ?? "")
     setCategory(product.category)
+    setSubcategory(product.subcategory ?? "")
     setPrice(String(product.price))
     setStock(String(product.stock ?? 0))
     setWeight(product.weight ? String(product.weight) : "")
@@ -313,6 +324,7 @@ export default function AdminPage() {
       ${product.title}
       ${product.description ?? ""}
       ${product.category}
+      ${product.subcategory ?? ""}
       ${product.price}
       ${product.stock}
       ${product.weight ?? ""}
@@ -387,12 +399,36 @@ export default function AdminPage() {
 
                 <select
                   value={category}
-                  onChange={(event) => setCategory(event.target.value)}
+                  onChange={(event) => {
+                    setCategory(event.target.value)
+                    setSubcategory("")
+                  }}
                   className={inputClass}
                 >
-                  <option value="Cabelos">Cabelos</option>
-                  <option value="Cosméticos">Cosméticos</option>
-                  <option value="Acessórios">Acessórios</option>
+                  {storeCategories.map((item) => (
+                    <option key={item.id} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Subcategoria
+                </label>
+
+                <select
+                  value={subcategory}
+                  onChange={(event) => setSubcategory(event.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Categoria principal</option>
+                  {subcategoryOptions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -623,6 +659,10 @@ export default function AdminPage() {
               const productStock = Math.max(0, Math.floor(Number(product.stock) || 0))
               const isOutOfStock = productStock === 0
               const isLowStock = productStock > 0 && productStock <= 5
+              const productSubcategoryLabel = getProductSubcategoryLabel(
+                product.category,
+                product.subcategory
+              )
 
               return (
               <div
@@ -644,7 +684,11 @@ export default function AdminPage() {
                     </h3>
 
                     <p className="mt-1 text-sm text-[#5C5C5C]">
-                      {product.category} •{" "}
+                      {product.category}
+                      {productSubcategoryLabel && (
+                        <> / {productSubcategoryLabel}</>
+                      )}{" "}
+                      •{" "}
                       {product.price.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",

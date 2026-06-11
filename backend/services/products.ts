@@ -10,6 +10,7 @@ export type Product = {
   title: string
   description: string | null
   category: string
+  subcategory: string | null
   price: number
   image: string
   featured: boolean

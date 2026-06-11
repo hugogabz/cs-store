@@ -4,6 +4,7 @@ import Image from "next/image"
 import { X } from "lucide-react"
 import { toast } from "sonner"
 import { useCartStore } from "@/frontend/store/cart-store"
+import { getProductSubcategoryLabel } from "@/shared/utils/categories"
 import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
 
@@ -18,6 +19,7 @@ type ProductDetailModalProps = {
   rating?: number
   ratingCount?: number
   stock: number
+  subcategory?: string | null
   title: string
 }
 
@@ -32,6 +34,7 @@ export function ProductDetailModal({
   rating = 4.8,
   ratingCount = 0,
   stock = 0,
+  subcategory,
   title,
 }: ProductDetailModalProps) {
   const addItem = useCartStore((state) => state.addItem)
@@ -42,6 +45,7 @@ export function ProductDetailModal({
   const numericPrice = toNumberPrice(price)
   const availableStock = Math.max(0, Math.floor(Number(stock) || 0))
   const isUnavailable = availableStock === 0
+  const subcategoryLabel = getProductSubcategoryLabel(category, subcategory)
   const displayRating = Math.min(5, Math.max(4, Number(rating) || 4.8))
   const displayRatingCount = Math.max(0, Math.floor(Number(ratingCount) || 0))
   const stockLabel = isUnavailable
@@ -72,7 +76,7 @@ export function ProductDetailModal({
         <div className="flex min-h-0 flex-col overflow-y-auto p-4 md:p-8">
           <div className="flex items-start justify-between gap-4">
             <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[#B89535]">
-              {category}
+              {subcategoryLabel ? `${category} / ${subcategoryLabel}` : category}
             </span>
 
             <button

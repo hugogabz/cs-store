@@ -5,6 +5,7 @@ import { Search, ShoppingBag, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useCartStore } from "@/frontend/store/cart-store"
+import { getProductSubcategoryLabel } from "@/shared/utils/categories"
 import { formatCurrency, toNumberPrice } from "@/shared/utils/currency"
 import { normalizeProductImageSrc } from "@/shared/utils/images"
 import { normalizeSearchText } from "@/shared/utils/search"
@@ -14,6 +15,7 @@ type Product = {
   title: string
   description: string | null
   category: string
+  subcategory: string | null
   price: number
   image: string
   stock: number
@@ -86,6 +88,7 @@ export function SearchModal({
         ${product.title}
         ${product.description ?? ""}
         ${product.category}
+        ${product.subcategory ?? ""}
         ${product.price}
         ${formatCurrency(product.price)}
       `)
@@ -131,6 +134,10 @@ export function SearchModal({
             const numericPrice = toNumberPrice(product.price)
             const availableStock = Math.max(0, Math.floor(Number(product.stock) || 0))
             const isUnavailable = availableStock === 0
+            const subcategoryLabel = getProductSubcategoryLabel(
+              product.category,
+              product.subcategory
+            )
 
             return (
               <div
@@ -151,7 +158,9 @@ export function SearchModal({
                   </h3>
 
                   <p className="mt-1 text-sm text-[#B89535]">
-                    {product.category} • {formatCurrency(numericPrice)}
+                    {subcategoryLabel
+                      ? `${product.category} / ${subcategoryLabel}`
+                      : product.category} • {formatCurrency(numericPrice)}
                   </p>
 
                   <p

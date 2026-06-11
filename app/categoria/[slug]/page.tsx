@@ -13,6 +13,7 @@ import {
   getCategoryNameBySlug,
   isCategorySlug,
   isSameCategory,
+  isSameSubcategory,
 } from "@/shared/utils/categories"
 
 export const dynamic = "force-dynamic"
@@ -20,6 +21,9 @@ export const dynamic = "force-dynamic"
 type CategoryPageProps = {
   params: Promise<{
     slug: string
+  }>
+  searchParams?: Promise<{
+    subcategoria?: string
   }>
 }
 
@@ -48,8 +52,10 @@ export async function generateMetadata({
 
 export default async function CategoryPage({
   params,
+  searchParams,
 }: CategoryPageProps) {
   const { slug } = await params
+  const selectedSubcategory = (await searchParams)?.subcategoria
 
   if (!isCategorySlug(slug)) {
     notFound()
@@ -57,13 +63,26 @@ export default async function CategoryPage({
 
   const categoryPage = categoryPages[slug]
   const products = await getProducts()
+  const subcategories = "subcategories" in categoryPage
+    ? categoryPage.subcategories
+    : []
 
   const filteredProducts = products.filter((product) => {
     if (slug === "destaques") {
       return product.featured
     }
 
-    return isSameCategory(product.category, getCategoryNameBySlug(slug))
+    const sameCategory = isSameCategory(product.category, getCategoryNameBySlug(slug))
+
+    if (!sameCategory) {
+      return false
+    }
+
+    if (!selectedSubcategory) {
+      return true
+    }
+
+    return isSameSubcategory(product.subcategory, selectedSubcategory)
   })
 
   return (
@@ -92,6 +111,35 @@ export default async function CategoryPage({
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#5C5C5C] md:text-base">
               {categoryPage.subtitle}
             </p>
+
+            {subcategories.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link
+                  href={`/categoria/${slug}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    !selectedSubcategory
+                      ? "bg-[#B89535] text-black"
+                      : "border border-[#E7E1D8] bg-white text-[#5C5C5C] hover:border-[#B89535] hover:text-[#B89535]"
+                  }`}
+                >
+                  Todos
+                </Link>
+
+                {subcategories.map((subcategory) => (
+                  <Link
+                    key={subcategory}
+                    href={`/categoria/${slug}?subcategoria=${encodeURIComponent(subcategory)}`}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      selectedSubcategory === subcategory
+                        ? "bg-[#B89535] text-black"
+                        : "border border-[#E7E1D8] bg-white text-[#5C5C5C] hover:border-[#B89535] hover:text-[#B89535]"
+                    }`}
+                  >
+                    {subcategory}
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="mt-8">
