@@ -280,6 +280,12 @@ export async function POST(request: Request) {
   const items = body?.items
 
   if (cepDestino.length !== 8) {
+    console.log("[shipping/calculate] blocked", {
+      reason: "invalid_destination_zipcode",
+      cepDestino,
+      rawCepDestino: body?.cepDestino ?? null,
+    })
+
     return NextResponse.json(
       {
         message: "Informe um CEP valido com 8 digitos.",
@@ -291,6 +297,12 @@ export async function POST(request: Request) {
   }
 
   if (melhorEnvioToken && cepOrigem.length !== 8) {
+    console.log("[shipping/calculate] blocked", {
+      reason: "invalid_origin_zipcode",
+      cepOrigem,
+      cepDestino,
+    })
+
     return NextResponse.json(
       {
         message:
@@ -303,6 +315,11 @@ export async function POST(request: Request) {
   }
 
   if (!Array.isArray(items) || items.length === 0) {
+    console.log("[shipping/calculate] blocked", {
+      reason: "empty_cart",
+      cepDestino,
+    })
+
     return NextResponse.json(
       {
         message: "Carrinho vazio. Adicione produtos antes de calcular o frete.",
@@ -323,6 +340,12 @@ export async function POST(request: Request) {
   )
 
   if (invalidItem) {
+    console.log("[shipping/calculate] blocked", {
+      reason: "invalid_cart_item",
+      cepDestino,
+      invalidItem,
+    })
+
     return NextResponse.json(
       {
         message: "Produto invalido no carrinho. Remova e adicione novamente.",
@@ -343,6 +366,13 @@ export async function POST(request: Request) {
   })
 
   if (products.length !== normalizedItems.length) {
+    console.log("[shipping/calculate] blocked", {
+      reason: "products_not_found",
+      cepDestino,
+      requestedProductIds: normalizedItems.map((item) => item.productId),
+      foundProductIds: products.map((product) => product.id),
+    })
+
     return NextResponse.json(
       {
         message: "Um ou mais produtos nao foram encontrados.",
@@ -412,6 +442,12 @@ export async function POST(request: Request) {
       ? await calculateMelhorEnvioShipping(melhorEnvioPayload)
       : calculateMockShipping()
 
+    console.log("[shipping/calculate] response", {
+      mode: shippingMode,
+      cepDestino,
+      options: shippingOptions,
+    })
+
     return NextResponse.json({
       options: shippingOptions,
       subtotal,
@@ -424,6 +460,12 @@ export async function POST(request: Request) {
       },
     })
   } catch (error) {
+    console.log("[shipping/calculate] failed", {
+      mode: shippingMode,
+      cepDestino,
+      error: error instanceof Error ? error.message : error,
+    })
+
     return NextResponse.json(
       {
         message:

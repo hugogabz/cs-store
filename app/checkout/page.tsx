@@ -678,6 +678,11 @@ export default function CheckoutPage() {
     const cepDigits = onlyDigits(cepDestino)
 
     if (cepDigits.length !== 8) {
+      console.info("[checkout/shipping] blocked", {
+        reason: "invalid_zipcode_format",
+        cepDestino,
+        cepDigits,
+      })
       toast.error("CEP inválido.")
       return
     }
@@ -685,6 +690,10 @@ export default function CheckoutPage() {
     const hasInvalidProduct = items.some((item) => !item.productId)
 
     if (hasInvalidProduct) {
+      console.info("[checkout/shipping] blocked", {
+        reason: "invalid_cart_product",
+        cepDestino: cepDigits,
+      })
       toast.error("Produto inválido no carrinho. Remova e adicione novamente.")
       return
     }
@@ -692,8 +701,22 @@ export default function CheckoutPage() {
     setCalculatingShipping(true)
 
     try {
-      const addressData = await fetchAddressByCep(cepDigits)
-      applyAddressFromCep(addressData)
+      try {
+        const addressData = await fetchAddressByCep(cepDigits)
+        applyAddressFromCep(addressData)
+      } catch (addressError) {
+        console.info("[checkout/address-autofill] failed", {
+          cepDestino: cepDigits,
+          reason: addressError instanceof Error
+            ? addressError.message
+            : "unknown_address_lookup_error",
+        })
+        toast.warning("Não foi possível preencher o endereço automaticamente.")
+      }
+
+      console.info("[checkout/shipping] calculating", {
+        cepDestino: cepDigits,
+      })
 
       const response = await fetch("/api/shipping/calculate", {
         method: "POST",
@@ -710,6 +733,15 @@ export default function CheckoutPage() {
       })
 
       const data = await response.json()
+
+      console.info("[checkout/shipping] response", {
+        cepDestino: cepDigits,
+        ok: response.ok,
+        status: response.status,
+        provider: data?.provider,
+        optionsCount: Array.isArray(data?.options) ? data.options.length : 0,
+        message: data?.message,
+      })
 
       if (!response.ok) {
         throw new Error(data?.message ?? "Não foi possível calcular o frete.")
